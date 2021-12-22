@@ -14,7 +14,7 @@ public abstract class AbstractPortHandler implements Runnable {
             try{
                 while (keepAlive()){
                     update();
-                    Thread.sleep(100);
+                    Thread.sleep(500);
                 }
             }catch (IOException | InterruptedException exception){
                 log("Error stopped update:", LogType.Problem);

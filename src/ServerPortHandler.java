@@ -6,8 +6,8 @@ public class ServerPortHandler extends AbstractPortHandler{
     @Override protected boolean keepAlive() { return true; }
 
     private ServerSocket serverSocket;
-    private AppConfig config;
-    private SlaveRegistry slaveRegistry;
+    private final AppConfig config;
+    private final SlaveRegistry slaveRegistry;
 
     public static ServerPortHandler createSlaveServerPortHandler(AppConfig config){
         return new ServerPortHandler(config, null);
@@ -40,7 +40,7 @@ public class ServerPortHandler extends AbstractPortHandler{
 
         switch (args[0]) {
             case NetCommandFormatting.HeadRequest -> {
-                log("Requested sign to master.", LogType.In);
+                log("Requested sign to master. (" + request + ")", LogType.In);
                 if (config.isMasterHost()) {
                     writer.write(NetCommandFormatting.HeadResponseMeMaster);
                     log("Responded it's me.", LogType.Out);
@@ -52,6 +52,27 @@ public class ServerPortHandler extends AbstractPortHandler{
                 }
                 writer.newLine();
                 writer.flush();
+            }
+
+            case NetCommandFormatting.RegistrationRequest -> {
+                log("Requested registration. (" + request + ")", LogType.In);
+                var identifier = Integer.parseInt(args[1]);
+                var slaveSocketAddress = currentSocket.getRemoteSocketAddress();
+                var pass = slaveRegistry.tryRegister(identifier, slaveSocketAddress);
+
+                if(pass){
+                    writer.write(NetCommandFormatting.RegistrationResponseSuccess);
+                    writer.newLine();
+                    writer.flush();
+
+                    log("Accepted registration.", LogType.Out);
+                }else{
+                    writer.write(NetCommandFormatting.RegistrationResponseDeny);
+                    writer.newLine();
+                    writer.flush();
+
+                    log("Denied.", LogType.Out);
+                }
             }
 
             default -> log("Unrecognized request: " + args[0], LogType.Problem);

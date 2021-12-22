@@ -21,10 +21,7 @@ public class Main
     }
 
     private static void startAsSlave(AppConfig config){
-        var clientPortHandler = new FreshClientPortHandler(
-                config.getGatewayAddress(),
-                config.getGatewayPort()
-        );
+        var clientPortHandler = new ClientPortHandler(config);
         var clientPortThread = new Thread(clientPortHandler);
         clientPortThread.start();
 

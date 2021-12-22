@@ -1,6 +1,5 @@
-import java.net.InetSocketAddress;
-import java.util.HashMap;
-import java.util.Map;
+import java.net.*;
+import java.util.*;
 
 public class SlaveRegistry {
     private Map<Integer, SlaveInfo> slaves;
@@ -9,7 +8,7 @@ public class SlaveRegistry {
         slaves = new HashMap<>(512);
     }
 
-    public boolean tryRegister(int identifier, InetSocketAddress socketAddress){
+    public boolean tryRegister(int identifier, SocketAddress socketAddress){
         if(slaves.containsKey(identifier))
             return false;
 
@@ -25,15 +24,15 @@ public class SlaveRegistry {
 }
 
 class SlaveInfo {
-    private InetSocketAddress slaveServer;
+    private SocketAddress slaveServer;
     private int identifier;
 
-    public SlaveInfo(InetSocketAddress slaveServer, int identifier) {
+    public SlaveInfo(SocketAddress slaveServer, int identifier) {
         this.slaveServer = slaveServer;
         this.identifier = identifier;
     }
 
-    public InetSocketAddress getSlaveServer() {
+    public SocketAddress getSlaveServer() {
         return slaveServer;
     }
 
