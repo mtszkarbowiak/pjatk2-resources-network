@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class AppConfig {
-    private  int identifier = -1;
+    private int identifier = -1;
     private int hostingPort = -1;
     private InetAddress gatewayAddress = null;
     private int gatewayPort = -1;

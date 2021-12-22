@@ -7,9 +7,20 @@ public class ServerPortHandler extends AbstractPortHandler{
 
     private ServerSocket serverSocket;
     private AppConfig config;
+    private SlaveRegistry slaveRegistry;
 
-    public ServerPortHandler(AppConfig config) {
+    public static ServerPortHandler createSlaveServerPortHandler(AppConfig config){
+        return new ServerPortHandler(config, null);
+    }
+
+    public static ServerPortHandler createMasterServerPortHandler(AppConfig config, SlaveRegistry slaveRegistry){
+        return new ServerPortHandler(config, slaveRegistry);
+
+    }
+
+    private ServerPortHandler(AppConfig config, SlaveRegistry slaveRegistry) {
         this.config = config;
+        this.slaveRegistry = slaveRegistry;
     }
 
     @Override

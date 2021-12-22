@@ -8,27 +8,35 @@ public class Main
         System.out.println("---* PROGRAM START *---");
 
         var config = new AppConfig(args);
-        var resourceRegistry = new ResourceRegistry(config.getResourcesSpaces());
         var masterHostMode = config.isMasterHost();
 
         System.out.println(config);
-        System.out.println("MainHostMode: " + masterHostMode);
+        System.out.println(masterHostMode ? "Running as MASTER" : "Running as SLAVE");
         System.out.println();
-        System.out.println("Starting handling threads.");
 
+        if(masterHostMode)
+            startAsMaster(config);
+        else
+            startAsSlave(config);
+    }
 
-        if(masterHostMode == false) {
-            var clientPortHandler = new FreshClientPortHandler(
-                    config.getGatewayAddress(),
-                    config.getGatewayPort()
-            );
-            var clientPortThread = new Thread(clientPortHandler);
-            clientPortThread.start();
-        }
-
-        var serverPortHandler = new ServerPortHandler(
-                config
+    private static void startAsSlave(AppConfig config){
+        var clientPortHandler = new FreshClientPortHandler(
+                config.getGatewayAddress(),
+                config.getGatewayPort()
         );
+        var clientPortThread = new Thread(clientPortHandler);
+        clientPortThread.start();
+
+        var serverPortHandler = ServerPortHandler.createSlaveServerPortHandler(config);
+        var serverPortThread = new Thread(serverPortHandler);
+        serverPortThread.start();
+    }
+
+    private static void startAsMaster(AppConfig config){
+        var slaveRegistry = new SlaveRegistry();
+
+        var serverPortHandler = ServerPortHandler.createMasterServerPortHandler(config, slaveRegistry);
         var serverPortThread = new Thread(serverPortHandler);
         serverPortThread.start();
     }
