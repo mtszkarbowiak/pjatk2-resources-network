@@ -85,7 +85,7 @@ public class AppConfig {
         return resourcesSpaces;
     }
 
-    public boolean isMainHost(){
+    public boolean isMasterHost(){
         return gatewayAddress == null;
     }
 

@@ -9,16 +9,16 @@ public class Main
 
         var config = new AppConfig(args);
         var resourceRegistry = new ResourceRegistry(config.getResourcesSpaces());
-        var mainHostMode = config.isMainHost();
+        var masterHostMode = config.isMasterHost();
 
         System.out.println(config);
-        System.out.println("MainHostMode: " + mainHostMode);
+        System.out.println("MainHostMode: " + masterHostMode);
         System.out.println();
         System.out.println("Starting handling threads.");
 
 
-        if(mainHostMode == false) {
-            var clientPortHandler = new ClientPortHandler(
+        if(masterHostMode == false) {
+            var clientPortHandler = new FreshClientPortHandler(
                     config.getGatewayAddress(),
                     config.getGatewayPort()
             );
@@ -27,7 +27,7 @@ public class Main
         }
 
         var serverPortHandler = new ServerPortHandler(
-                config.getHostingPort()
+                config
         );
         var serverPortThread = new Thread(serverPortHandler);
         serverPortThread.start();
