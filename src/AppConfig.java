@@ -29,32 +29,25 @@ public class AppConfig {
                 }
             }
 
-            switch (expectation){
-                case Identifier: {
-                    identifier = Integer.parseInt(arg);
-                    break;
-                }
-                case Port: {
-                    hostingPort = Integer.parseInt(arg);
-                    break;
-                }
-                case Gateway: {
+            switch (expectation) {
+                case Identifier -> identifier = Integer.parseInt(arg);
+                case Port -> hostingPort = Integer.parseInt(arg);
+                case Gateway -> {
                     var subArgs = arg.split(":");
                     var address = InetAddress.getByName(subArgs[0]);
                     var port = Integer.parseInt(subArgs[1]);
 
                     gatewayAddress = address;
                     gatewayPort = port;
-                    break;
                 }
-                case Resource: {
+                case Resource -> {
                     var subArgs = arg.split(":");
                     var id = subArgs[0];
                     var value = Integer.parseInt(subArgs[1]);
 
                     resourcesSpaces.put(id, value);
-                    break;
                 }
+                default -> throw new IllegalStateException("Unexpected value: " + expectation);
             }
             expectation = ArgExpectation.Resource;
         }
@@ -82,6 +75,10 @@ public class AppConfig {
 
     public InetAddress getGatewayAddress() {
         return gatewayAddress;
+    }
+
+    public int getGatewayPort() {
+        return gatewayPort;
     }
 
     public Map<String, Integer> getResourcesSpaces() {
