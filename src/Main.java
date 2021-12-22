@@ -8,7 +8,7 @@ public class Main
         System.out.println("---* PROGRAM START *---");
 
         var config = new AppConfig(args);
-        var resourceRegistry = new HostResourceRegistry(config.getResourcesSpaces());
+        var resourceRegistry = new ResourceRegistry(config.getResourcesSpaces());
         var mainHostMode = config.isMainHost();
 
         System.out.println(config);

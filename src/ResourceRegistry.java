@@ -1,28 +1,28 @@
 import java.util.*;
 
-public class HostResourceRegistry {
-    private Map<String, ResourceRegistry> subregistries;
+public class ResourceRegistry {
+    private final Map<String, ResourceSubRegistry> subRegistries;
 
-    public HostResourceRegistry(Map<String, Integer> spaces){
-        subregistries = new HashMap<>(spaces.entrySet().size());
+    public ResourceRegistry(Map<String, Integer> spaces){
+        subRegistries = new HashMap<>(spaces.entrySet().size());
 
         for (var spaceRecord : spaces.entrySet()) {
-            var newRegistry = new ResourceRegistry(spaceRecord.getKey(), spaceRecord.getValue());
-            subregistries.put(spaceRecord.getKey(), newRegistry);
+            var newRegistry = new ResourceSubRegistry(spaceRecord.getValue());
+            subRegistries.put(spaceRecord.getKey(), newRegistry);
         }
     }
 
     public int tryAlloc(String resourceName, int identifier, int requiredAllocs)
     {
-        if(subregistries.containsKey(resourceName) == false)
+        if(subRegistries.containsKey(resourceName) == false)
             return 0; // No registry is equivalent of space 0.
 
-        var subregistry = subregistries.get(resourceName);
+        var subregistry = subRegistries.get(resourceName);
         return subregistry.tryAllocate(identifier, requiredAllocs);
     }
 
     public int getValue(String resourceName, int identifier){
-        var subregistry = subregistries.getOrDefault(resourceName, null);
+        var subregistry = subRegistries.getOrDefault(resourceName, null);
 
         if(subregistry == null) return 0;
 
@@ -30,14 +30,12 @@ public class HostResourceRegistry {
     }
 }
 
-class ResourceRegistry{
-    private final String name;
-    private Map<Integer, Integer> sources;
-    private int capacity;
+class ResourceSubRegistry {
+    private final Map<Integer, Integer> sources;
+    private final int capacity;
 
 
-    public ResourceRegistry(String name, int capacity) {
-        this.name = name;
+    public ResourceSubRegistry(int capacity) {
         this.capacity = capacity;
 
         sources = new HashMap<>(capacity);

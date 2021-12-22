@@ -6,7 +6,7 @@ public class Tests {
 
         var spaces = new HashMap<String,Integer>();
         spaces.put("A",5);
-        var resourceRegistry = new HostResourceRegistry(spaces);
+        var resourceRegistry = new ResourceRegistry(spaces);
 
         assertInt(2, resourceRegistry.tryAlloc("A", 61, 2), "Alloc1");
         assertInt(2, resourceRegistry.tryAlloc("A", 62, 2), "Alloc2");
