@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.*;
 
 public class ServerPortHandler extends AbstractPortHandler{
-    @Override protected String getLogPrefix() { return "Server"; }
+    @Override protected String getLogPrefix() { return "> Server"; }
     @Override protected boolean keepAlive() { return true; }
 
     private ServerSocket serverSocket;

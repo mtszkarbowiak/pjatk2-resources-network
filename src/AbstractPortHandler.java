@@ -14,17 +14,26 @@ public abstract class AbstractPortHandler implements Runnable {
             try{
                 while (keepAlive()){
                     update();
-                    Thread.sleep(500);
                 }
-            }catch (IOException | InterruptedException exception){
+            }catch (IOException exception){
                 log("Error stopped update:", LogType.Problem);
                 exception.printStackTrace();
+                sleep(1000);
             }
+            sleep(500);
         }
 
         log("Loop halted. Halting the handler.", LogType.Info);
         onHalted();
         log("Handler halted. Stopping the thread.", LogType.Info);
+    }
+
+    protected void sleep(int ms){
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     protected abstract void update() throws IOException;

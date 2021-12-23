@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.*;
 
 public class ClientPortHandler extends AbstractPortHandler{
-    @Override protected String getLogPrefix() { return "Client"; }
+    @Override protected String getLogPrefix() { return "Client >"; }
     @Override protected boolean keepAlive() { return isRegistered == false; } //TODO Client actions
 
     // You can ask a friend where is the master.
