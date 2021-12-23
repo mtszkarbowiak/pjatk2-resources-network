@@ -8,7 +8,7 @@ public abstract class AbstractPortHandler implements Runnable {
 
     @Override
     public void run() {
-        log("Starting loop.", LogType.Info);
+        log("Starting loop.", LogType.Config);
 
         while (keepAlive()){
             try{
@@ -23,9 +23,9 @@ public abstract class AbstractPortHandler implements Runnable {
             sleep(500);
         }
 
-        log("Loop halted. Halting the handler.", LogType.Info);
+        log("Loop halted. Halting the handler.", LogType.Config);
         onHalted();
-        log("Handler halted. Stopping the thread.", LogType.Info);
+        log("Handler halted. Stopping the thread.", LogType.Config);
     }
 
     protected void sleep(int ms){
@@ -44,7 +44,7 @@ public abstract class AbstractPortHandler implements Runnable {
 
 enum LogType{
     Info("(i)"),
-    Config("***"),
+    Config("[#]"),
     In("* <-"),
     Out("* ->"),
     Problem("/!\\");

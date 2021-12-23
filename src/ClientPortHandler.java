@@ -8,6 +8,7 @@ public class ClientPortHandler extends AbstractPortHandler{
     // You can ask a friend where is the master.
     private final InetSocketAddress friendInetSocketAddress;
     private final AppConfig config;
+    private InetSocketAddress overFriendSocketAddress;
     private InetSocketAddress masterInetSocketAddress;
     private Socket currentSocket;
     private boolean isRegistered;
@@ -18,6 +19,7 @@ public class ClientPortHandler extends AbstractPortHandler{
                 config.getGatewayAddress(),
                 config.getGatewayPort());
 
+        this.overFriendSocketAddress = null;
         this.masterInetSocketAddress = null;
         this.currentSocket = null;
         this.isRegistered = false;
@@ -29,13 +31,18 @@ public class ClientPortHandler extends AbstractPortHandler{
             requestMasterAddress();
         }
 
+        if(masterInetSocketAddress == null){
+            log("Master's address is still uknown.", LogType.Info);
+            return;
+        }
+
         log("Establishing connection to the master.", LogType.Info);
         if(currentSocket == null)
             currentSocket = new Socket();
         if(currentSocket.isConnected() == false)
             currentSocket.connect(masterInetSocketAddress);
 
-        log("Connection with the master established.", LogType.Info);
+        // log("Connection with the master established.", LogType.Info);
         var writer = new BufferedWriter(new OutputStreamWriter(currentSocket.getOutputStream()));
         var reader = new BufferedReader(new InputStreamReader(currentSocket.getInputStream()));
 
@@ -51,11 +58,17 @@ public class ClientPortHandler extends AbstractPortHandler{
     }
 
     private void requestMasterAddress() throws IOException {
-        log("Establishing connection to the friend.", LogType.Info);
-        currentSocket = new Socket();
-        currentSocket.connect(friendInetSocketAddress);
+        if(overFriendSocketAddress == null) {
+            log("Establishing connection to the base friend.", LogType.Info);
+            overFriendSocketAddress = friendInetSocketAddress;
+        }else{
+            log("Establishing connection to the over-friend: " + overFriendSocketAddress, LogType.Info);
+        }
 
-        log("Connection with the friend established.", LogType.Info);
+        currentSocket = new Socket();
+        currentSocket.connect(overFriendSocketAddress);
+
+        log("Connection established.", LogType.Info);
         var writer = new BufferedWriter(new OutputStreamWriter(currentSocket.getOutputStream()));
         var reader = new BufferedReader(new InputStreamReader(currentSocket.getInputStream()));
 
@@ -65,24 +78,27 @@ public class ClientPortHandler extends AbstractPortHandler{
         writer.flush();
 
         var responseAboutMaster = reader.readLine();
-        log("Friend response: " + responseAboutMaster, LogType.In);
 
         var args = responseAboutMaster.split(" ");
         switch (args[0]) {
             case NetCommandFormatting.HeadResponseAboutMaster -> {
                 var masterAddress = InetAddress.getByName(args[1]);
                 var masterPort = Integer.parseInt(args[2]);
-                masterInetSocketAddress = new InetSocketAddress(masterAddress, masterPort);
-                log("Master aknowledged: " + masterInetSocketAddress, LogType.In);
+                overFriendSocketAddress = new InetSocketAddress(masterAddress, masterPort);
+                log("Next over-friend aknowledged: " + overFriendSocketAddress, LogType.In);
             }
 
             case NetCommandFormatting.HeadResponseMeMaster -> {
-                masterInetSocketAddress = friendInetSocketAddress;
+                masterInetSocketAddress = overFriendSocketAddress;
+                overFriendSocketAddress = null;
                 log("Friend is the master!", LogType.In);
             }
 
-            case NetCommandFormatting.HeadResponseFail ->
-                 log("Friend does not know any master.", LogType.In);
+            case NetCommandFormatting.HeadResponseFail -> {
+                masterInetSocketAddress = null;
+                overFriendSocketAddress = null;
+                log("Friend does not know any master and has no friends.", LogType.In);
+            }
         }
 
         currentSocket.close();

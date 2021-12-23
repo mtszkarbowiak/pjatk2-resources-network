@@ -1,7 +1,7 @@
 public class NetCommandFormatting {
     // Navigation to Master (SH <-> SH)
     public static final String HeadRequest = "SHOW_MASTER";
-    public static final String HeadResponseAboutMaster = "MASTER_IS";
+    public static final String HeadResponseAboutMaster = "ASK_HIM";
     public static final String HeadResponseMeMaster = "I_AM_MASTER";
     public static final String HeadResponseFail = "UNKNOWN_MASTER";
 

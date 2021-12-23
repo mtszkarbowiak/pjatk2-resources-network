@@ -31,7 +31,7 @@ public class ServerPortHandler extends AbstractPortHandler{
 
         var currentSocket = serverSocket.accept();
 
-        log("Connection established. Awaiting request.", LogType.Info);
+        // log("Connection established. Awaiting request.", LogType.Info);
         var writer = new BufferedWriter(new OutputStreamWriter(currentSocket.getOutputStream()));
         var reader = new BufferedReader(new InputStreamReader(currentSocket.getInputStream()));
 
@@ -48,7 +48,7 @@ public class ServerPortHandler extends AbstractPortHandler{
                     writer.write(NetCommandFormatting.HeadResponseAboutMaster
                             + " " + config.getGatewayAddress().getHostAddress()
                             + " " + config.getGatewayPort());
-                    log("Responded with address to the master.", LogType.Out);
+                    log("Responded with address to someone else to ask.", LogType.Out);
                 }
                 writer.newLine();
                 writer.flush();
