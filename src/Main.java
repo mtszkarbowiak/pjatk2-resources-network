@@ -21,19 +21,24 @@ public class Main
     }
 
     private static void startAsSlave(AppConfig config){
-        var clientPortHandler = new ClientPortHandler(config);
+        var internalCommunication = new InternalCommunication(config);
+
+        var clientPortHandler = new ClientPortHandler(config, internalCommunication);
         var clientPortThread = new Thread(clientPortHandler);
         clientPortThread.start();
 
-        var serverPortHandler = ServerPortHandler.createSlaveServerPortHandler(config);
+        var serverPortHandler =
+                ServerPortHandler.createSlaveServerPortHandler(config, internalCommunication);
         var serverPortThread = new Thread(serverPortHandler);
         serverPortThread.start();
     }
 
     private static void startAsMaster(AppConfig config){
+        var internalCommunication = new InternalCommunication(config);
         var slaveRegistry = new SlaveRegistry();
 
-        var serverPortHandler = ServerPortHandler.createMasterServerPortHandler(config, slaveRegistry);
+        var serverPortHandler =
+                ServerPortHandler.createMasterServerPortHandler(config, internalCommunication, slaveRegistry);
         var serverPortThread = new Thread(serverPortHandler);
         serverPortThread.start();
     }

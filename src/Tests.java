@@ -4,6 +4,26 @@ public class Tests {
     public static void internalTests(boolean showPass){
         if(showPass) System.out.println("---* TESTS START *---");
 
+        testResourceRegistry(showPass);
+
+        testAllocationRequest(showPass);
+
+        if(showPass){
+            System.out.println("---* TESTS END *---");
+            System.out.println();
+        }
+    }
+
+    private static void testAllocationRequest(boolean showPass) {
+        var requestText = "6969 A:420 B:7";
+        var requestObj = new AllocationRequest(requestText);
+
+        assertInt(showPass, 6969, requestObj.getClientIdentifier(), "ClientID");
+        assertInt(showPass, 420, requestObj.getResources().get("A"), "Rsc_A");
+        assertInt(showPass, 7, requestObj.getResources().get("B"), "Rsc_B");
+    }
+
+    private static void testResourceRegistry(boolean showPass) {
         var spaces = new HashMap<String,Integer>();
         spaces.put("A",5);
         var resourceRegistry = new ResourceRegistry(spaces);
@@ -14,11 +34,6 @@ public class Tests {
         assertInt(showPass, 0, resourceRegistry.tryAlloc("B", 64, 1), "Alloc4-Neg");
 
         assertInt(showPass, 2, resourceRegistry.getValue("A", 62), "Alloc2-Ret");
-
-        if(showPass){
-            System.out.println("---* TESTS END *---");
-            System.out.println();
-        }
     }
 
     private static void assertInt(boolean showPass, int expected, int actual, String msg){

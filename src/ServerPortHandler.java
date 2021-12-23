@@ -7,21 +7,27 @@ public class ServerPortHandler extends AbstractPortHandler{
 
     private ServerSocket serverSocket;
     private final AppConfig config;
+    private final InternalCommunication internalCommunication;
     private final SlaveRegistry slaveRegistry;
 
-    public static ServerPortHandler createSlaveServerPortHandler(AppConfig config){
-        return new ServerPortHandler(config, null);
+
+    public static ServerPortHandler createSlaveServerPortHandler(
+            AppConfig config, InternalCommunication internalCommunication){
+        return new ServerPortHandler(config, internalCommunication, null);
     }
 
-    public static ServerPortHandler createMasterServerPortHandler(AppConfig config, SlaveRegistry slaveRegistry){
-        return new ServerPortHandler(config, slaveRegistry);
+    public static ServerPortHandler createMasterServerPortHandler(
+            AppConfig config, InternalCommunication internalCommunication, SlaveRegistry slaveRegistry){
+        return new ServerPortHandler(config, internalCommunication, slaveRegistry);
 
     }
 
-    private ServerPortHandler(AppConfig config, SlaveRegistry slaveRegistry) {
+    private ServerPortHandler(AppConfig config, InternalCommunication internalCommunication, SlaveRegistry slaveRegistry) {
         this.config = config;
+        this.internalCommunication = internalCommunication;
         this.slaveRegistry = slaveRegistry;
     }
+
 
     @Override
     protected void update() throws IOException {
@@ -31,12 +37,11 @@ public class ServerPortHandler extends AbstractPortHandler{
 
         var currentSocket = serverSocket.accept();
 
-        // log("Connection established. Awaiting request.", LogType.Info);
-        var writer = new BufferedWriter(new OutputStreamWriter(currentSocket.getOutputStream()));
-        var reader = new BufferedReader(new InputStreamReader(currentSocket.getInputStream()));
+        final var writer = new BufferedWriter(new OutputStreamWriter(currentSocket.getOutputStream()));
+        final var reader = new BufferedReader(new InputStreamReader(currentSocket.getInputStream()));
 
-        var request = reader.readLine();
-        var args = request.split(" ");
+        final var request = reader.readLine();
+        final var args = request.split(" ");
 
         switch (args[0]) {
             case NetCommandFormatting.HeadRequest -> {
@@ -75,7 +80,12 @@ public class ServerPortHandler extends AbstractPortHandler{
                 }
             }
 
-            default -> log("Unrecognized request: " + args[0], LogType.Problem);
+            default -> {
+                log("Incoming (interpreted allocations) request: " + request, LogType.In);
+
+                var allocationsRequest = new AllocationRequest(request);
+                internalCommunication.passAllocationRequest(allocationsRequest);
+            }
         }
     }
 
