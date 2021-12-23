@@ -3,7 +3,7 @@ import java.net.*;
 public class Main
 {
     public static void main(String[] args) throws UnknownHostException {
-        Tests.internalTests();
+        Tests.internalTests(false);
 
         System.out.println("---* PROGRAM START *---");
 
