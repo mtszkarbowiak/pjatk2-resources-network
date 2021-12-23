@@ -1,4 +1,4 @@
-public class NetCommandFormatting {
+public class NetCommands {
     // Navigation to Master (SH <-> SH)
     public static final String HeadRequest = "SHOW_MASTER";
     public static final String HeadResponseAboutMaster = "ASK_HIM";

@@ -27,18 +27,7 @@ public class ClientPortHandler extends AbstractPortHandler{
 
     @Override
     protected void update() throws IOException {
-        // Check if client has anything productive to do. Wait without opening ports if not necessary.
-        int idleDt = 0;
-        while (internalCommunication.isIdle()) {
-            int dT = 100;
-            sleep(dT);
-            idleDt++;
-
-            if(idleDt % 100 == 0) {
-                int secs = idleDt * dT / 1000;
-                log("Client is idle for " + secs + " secs.", LogType.Info);
-            }
-        }
+        sleepUntilWork();
 
         // Establish who is the master host
         if(masterInetSocketAddress == null){
@@ -54,8 +43,9 @@ public class ClientPortHandler extends AbstractPortHandler{
         log("Establishing connection to the master.", LogType.Info);
         if(currentSocket == null)
             currentSocket = new Socket();
-        if(currentSocket.isConnected() == false)
+        if(currentSocket.isConnected() == false) {
             currentSocket.connect(masterInetSocketAddress);
+        }
 
         final var writer = new BufferedWriter(new OutputStreamWriter(currentSocket.getOutputStream()));
         final var reader = new BufferedReader(new InputStreamReader(currentSocket.getInputStream()));
@@ -67,10 +57,32 @@ public class ClientPortHandler extends AbstractPortHandler{
         }
 
         // Close occupied socket if there are no more things to do
-        if(internalCommunication.isIdle())
+        if(internalCommunication.isIdle()) {
             currentSocket.close();
+            currentSocket = null;
+        }
 
         //TODO Internal communication requests handling.
+    }
+
+    private void sleepUntilWork() {
+        int interval = 100;
+        final int intervalIncrement = 200;
+        final int logDisplayNo = 5;
+        int totalSleep = 0;
+        int logIndex = 1;
+
+        while (internalCommunication.isIdle()) {
+            var currentSleepTime = interval;
+
+            sleep(currentSleepTime);
+
+            totalSleep += currentSleepTime;
+            interval += intervalIncrement;
+
+            if(logIndex++ % logDisplayNo == 0)
+                log("Waiting idle for " + (totalSleep / 1000) + " sec.", LogType.Info);
+        }
     }
 
     private void requestMasterAddress() throws IOException {
@@ -89,7 +101,7 @@ public class ClientPortHandler extends AbstractPortHandler{
         final var reader = new BufferedReader(new InputStreamReader(currentSocket.getInputStream()));
 
         log("Asking for the master...", LogType.Out);
-        writer.write(NetCommandFormatting.HeadRequest);
+        writer.write(NetCommands.HeadRequest);
         writer.newLine();
         writer.flush();
 
@@ -97,20 +109,20 @@ public class ClientPortHandler extends AbstractPortHandler{
 
         var args = responseAboutMaster.split(" ");
         switch (args[0]) {
-            case NetCommandFormatting.HeadResponseAboutMaster -> {
+            case NetCommands.HeadResponseAboutMaster -> {
                 var masterAddress = InetAddress.getByName(args[1]);
                 var masterPort = Integer.parseInt(args[2]);
                 overFriendSocketAddress = new InetSocketAddress(masterAddress, masterPort);
                 log("Next over-friend aknowledged: " + overFriendSocketAddress, LogType.In);
             }
 
-            case NetCommandFormatting.HeadResponseMeMaster -> {
+            case NetCommands.HeadResponseMeMaster -> {
                 masterInetSocketAddress = overFriendSocketAddress;
                 overFriendSocketAddress = null;
                 log("Friend is the master!", LogType.In);
             }
 
-            case NetCommandFormatting.HeadResponseFail -> {
+            case NetCommands.HeadResponseFail -> {
                 masterInetSocketAddress = null;
                 overFriendSocketAddress = null;
                 log("Friend does not know any master and has no friends.", LogType.In);
@@ -123,17 +135,17 @@ public class ClientPortHandler extends AbstractPortHandler{
 
     private boolean requestRegistration(BufferedWriter writer, BufferedReader reader) throws IOException {
         log("Requesting registration.", LogType.Out);
-        writer.write(NetCommandFormatting.RegistrationRequest + " " + config.getIdentifier());
+        writer.write(NetCommands.RegistrationRequest + " " + config.getIdentifier());
         writer.newLine();
         writer.flush();
 
         var response = reader.readLine();
         switch (response) {
-            case NetCommandFormatting.RegistrationResponseSuccess -> {
+            case NetCommands.RegistrationResponseSuccess -> {
                 log("Master successfully registered me.", LogType.In);
                 return true;
             }
-            case NetCommandFormatting.RegistrationResponseDeny -> {
+            case NetCommands.RegistrationResponseDeny -> {
                 log("Master denied registration.", LogType.In);
                 return false;
             }

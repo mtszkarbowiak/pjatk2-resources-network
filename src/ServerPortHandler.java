@@ -44,13 +44,13 @@ public class ServerPortHandler extends AbstractPortHandler{
         final var args = request.split(" ");
 
         switch (args[0]) {
-            case NetCommandFormatting.HeadRequest -> {
+            case NetCommands.HeadRequest -> {
                 log("Requested sign to master. (" + request + ")", LogType.In);
                 if (config.isMasterHost()) {
-                    writer.write(NetCommandFormatting.HeadResponseMeMaster);
+                    writer.write(NetCommands.HeadResponseMeMaster);
                     log("Responded it's me.", LogType.Out);
                 } else {
-                    writer.write(NetCommandFormatting.HeadResponseAboutMaster
+                    writer.write(NetCommands.HeadResponseAboutMaster
                             + " " + config.getGatewayAddress().getHostAddress()
                             + " " + config.getGatewayPort());
                     log("Responded with address to someone else to ask.", LogType.Out);
@@ -59,20 +59,20 @@ public class ServerPortHandler extends AbstractPortHandler{
                 writer.flush();
             }
 
-            case NetCommandFormatting.RegistrationRequest -> {
+            case NetCommands.RegistrationRequest -> {
                 log("Requested registration. (" + request + ")", LogType.In);
                 var identifier = Integer.parseInt(args[1]);
                 var slaveSocketAddress = currentSocket.getRemoteSocketAddress();
                 var pass = slaveRegistry.tryRegister(identifier, slaveSocketAddress);
 
                 if(pass){
-                    writer.write(NetCommandFormatting.RegistrationResponseSuccess);
+                    writer.write(NetCommands.RegistrationResponseSuccess);
                     writer.newLine();
                     writer.flush();
 
                     log("Accepted registration.", LogType.Out);
                 }else{
-                    writer.write(NetCommandFormatting.RegistrationResponseDeny);
+                    writer.write(NetCommands.RegistrationResponseDeny);
                     writer.newLine();
                     writer.flush();
 
