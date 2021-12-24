@@ -47,7 +47,7 @@ public abstract class AbstractPortHandler implements Runnable {
     }
 
     protected int getLoopInterval(){
-        return 500;
+        return 50;
     }
 
     protected int getReconnectionInterval(){
