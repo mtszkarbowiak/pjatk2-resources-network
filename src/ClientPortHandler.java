@@ -56,14 +56,21 @@ public class ClientPortHandler extends AbstractPortHandler{
                 internalCommunication.markRegistered();
         }
 
+        while (internalCommunication.pendingAllocationRequests.isEmpty() == false){
+            var request = internalCommunication.pendingAllocationRequests.remove();
+            log("Passing Allocation Request to Master is not yet implemented.", LogType.Problem);
+        }
+
         // Close occupied socket if there are no more things to do
         if(internalCommunication.isIdle()) {
+            log("Disconnecting.", LogType.Info);
             currentSocket.close();
             currentSocket = null;
         }
 
         //TODO Internal communication requests handling.
     }
+
 
     private void sleepUntilWork() {
         int interval = 100;

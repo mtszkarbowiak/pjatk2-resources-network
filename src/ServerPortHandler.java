@@ -94,7 +94,7 @@ public class ServerPortHandler extends AbstractPortHandler{
                 log("Incoming (interpreted allocations) request: " + request, LogType.In);
 
                 var allocationsRequest = new AllocationRequest(request);
-                internalCommunication.passAllocationRequest(allocationsRequest);
+                internalCommunication.pendingAllocationRequests.add(allocationsRequest);
             }
         }
     }

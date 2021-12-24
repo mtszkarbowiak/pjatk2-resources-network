@@ -5,7 +5,7 @@ public class InternalCommunication {
     private AppConfig config;
     private boolean isRegistered;
 
-    private Queue<AllocationRequest> pendingAllocationRequests;
+    public final Queue<AllocationRequest> pendingAllocationRequests;
 
     public InternalCommunication(AppConfig config) {
         this.config = config;
@@ -16,19 +16,12 @@ public class InternalCommunication {
         isRegistered = true;
     }
 
-    public void passAllocationRequest(AllocationRequest allocationRequest){
-        pendingAllocationRequests.add(allocationRequest);
-    }
-
-    public boolean hasNextAllocationRequest(){
-        return pendingAllocationRequests.isEmpty() == false;
-    }
 
     public boolean isRegistered(){
         return isRegistered;
     }
 
     public boolean isIdle(){
-        return isRegistered && hasNextAllocationRequest() == false;
+        return isRegistered && pendingAllocationRequests.isEmpty();
     }
 }
