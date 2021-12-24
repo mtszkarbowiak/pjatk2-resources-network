@@ -4,43 +4,27 @@ import java.util.*;
 
 public class ServerPortHandler extends AbstractPortHandler{
     @Override protected String getLogPrefix() { return "> Server"; }
-    @Override protected boolean keepAlive() { return true; }
 
-    private ServerSocket serverSocket;
     private final AppConfig config;
     private final InternalCommunication internalCommunication;
     private final SlaveRegistry slaveRegistry;
+    private ServerSocket serverSocket;
 
-
-    public static ServerPortHandler createSlaveServerPortHandler(
-            AppConfig config, InternalCommunication internalCommunication){
-        return new ServerPortHandler(config, internalCommunication, null);
-    }
-
-    public static ServerPortHandler createMasterServerPortHandler(
-            AppConfig config, InternalCommunication internalCommunication, SlaveRegistry slaveRegistry){
-        return new ServerPortHandler(config, internalCommunication, slaveRegistry);
-
-    }
-
-    private ServerPortHandler(AppConfig config, InternalCommunication internalCommunication, SlaveRegistry slaveRegistry) {
+    public ServerPortHandler(AppConfig config, InternalCommunication internalCommunication) {
         this.config = config;
         this.internalCommunication = internalCommunication;
-        this.slaveRegistry = slaveRegistry;
+
+        slaveRegistry = config.isMasterHost() ? new SlaveRegistry() : null;
     }
 
+    @Override
+    protected Socket openConnection() throws IOException {
+        serverSocket = new ServerSocket(config.getHostingPort());
+        return serverSocket.accept();
+    }
 
     @Override
-    protected void update() throws IOException {
-        if(serverSocket == null || serverSocket.isClosed()){
-            serverSocket = new ServerSocket(config.getHostingPort());
-        }
-
-        var currentSocket = serverSocket.accept();
-
-        final var writer = new BufferedWriter(new OutputStreamWriter(currentSocket.getOutputStream()));
-        final var reader = new BufferedReader(new InputStreamReader(currentSocket.getInputStream()));
-
+    protected void useConnection(BufferedReader reader, BufferedWriter writer, ConnectionInfo connectionInfo) throws IOException {
         final var request = reader.readLine();
         final var args = request.split(" ");
 
@@ -63,7 +47,7 @@ public class ServerPortHandler extends AbstractPortHandler{
             case NetCommands.RegistrationRequest -> {
                 log("Requested registration. (" + request + ")", LogType.In);
                 var identifier = Integer.parseInt(args[1]);
-                var slaveSocketAddress = currentSocket.getRemoteSocketAddress();
+                var slaveSocketAddress = connectionInfo.getRemoteSocketAddress();
 
                 var space = new HashMap<String,Integer>(args.length - 2);
                 for (int i = 2; i < args.length; i++) {
@@ -97,15 +81,7 @@ public class ServerPortHandler extends AbstractPortHandler{
                 internalCommunication.pendingAllocationRequests.add(allocationsRequest);
             }
         }
-    }
 
-    @Override
-    protected void onHalted() {
-        try {
-            if(serverSocket.isClosed() == false)
-            serverSocket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        serverSocket.close();
     }
 }

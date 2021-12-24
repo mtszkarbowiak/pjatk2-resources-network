@@ -27,18 +27,15 @@ public class Main
         var clientPortThread = new Thread(clientPortHandler);
         clientPortThread.start();
 
-        var serverPortHandler =
-                ServerPortHandler.createSlaveServerPortHandler(config, internalCommunication);
+        var serverPortHandler = new ServerPortHandler(config, internalCommunication);
         var serverPortThread = new Thread(serverPortHandler);
         serverPortThread.start();
     }
 
     private static void startAsMaster(AppConfig config){
         var internalCommunication = new InternalCommunication(config);
-        var slaveRegistry = new SlaveRegistry();
 
-        var serverPortHandler =
-                ServerPortHandler.createMasterServerPortHandler(config, internalCommunication, slaveRegistry);
+        var serverPortHandler = new ServerPortHandler(config, internalCommunication);
         var serverPortThread = new Thread(serverPortHandler);
         serverPortThread.start();
     }
