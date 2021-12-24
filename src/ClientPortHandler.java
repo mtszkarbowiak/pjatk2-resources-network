@@ -46,13 +46,6 @@ public class ClientPortHandler extends AbstractPortHandler
             requestRegistration(reader, writer);
             return;
         }
-
-        while (internalCommunication.pendingAllocationRequests.isEmpty() == false){
-            var request = internalCommunication.pendingAllocationRequests.remove();
-            log("Passing Allocation Request to Master is not yet implemented.", LogType.Problem);
-        }
-
-        //TODO Internal communication requests handling.
     }
 
 

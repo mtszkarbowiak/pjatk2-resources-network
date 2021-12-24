@@ -61,12 +61,21 @@ public abstract class AbstractPortHandler implements Runnable {
 
 class ConnectionInfo{
     private Socket socket;
+
     public ConnectionInfo(Socket socket) {
         this.socket = socket;
     }
 
     public SocketAddress getRemoteSocketAddress() {
         return socket.getRemoteSocketAddress();
+    }
+
+    public InetAddress getInetAddress(){
+        return socket.getInetAddress();
+    }
+
+    public InetSocketAddress getInetSocketAddress(){
+        return new InetSocketAddress(getInetAddress(), socket.getPort());
     }
 }
 
