@@ -8,11 +8,11 @@ public class SlaveRegistry {
         slaves = new HashMap<>(512);
     }
 
-    public boolean tryRegister(int identifier, SocketAddress socketAddress){
+    public boolean tryRegister(int identifier, SocketAddress socketAddress, Map<String,Integer> space){
         if(slaves.containsKey(identifier))
             return false;
 
-        var slaveInfo = new SlaveInfo(socketAddress, identifier);
+        var slaveInfo = new SlaveInfo(socketAddress, identifier, space);
         slaves.put(identifier, slaveInfo);
 
         return true;
@@ -25,11 +25,13 @@ public class SlaveRegistry {
 
 class SlaveInfo {
     private SocketAddress slaveServer;
+    private Map<String, Integer> space;
     private int identifier;
 
-    public SlaveInfo(SocketAddress slaveServer, int identifier) {
+    public SlaveInfo(SocketAddress slaveServer, int identifier, Map<String,Integer> space) {
         this.slaveServer = slaveServer;
         this.identifier = identifier;
+        this.space = space;
     }
 
     public SocketAddress getSlaveServer() {

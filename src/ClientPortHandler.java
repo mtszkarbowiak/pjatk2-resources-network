@@ -136,6 +136,10 @@ public class ClientPortHandler extends AbstractPortHandler{
     private boolean requestRegistration(BufferedWriter writer, BufferedReader reader) throws IOException {
         log("Requesting registration.", LogType.Out);
         writer.write(NetCommands.RegistrationRequest + " " + config.getIdentifier());
+        for (var keyVal : config.getResourcesSpaces().entrySet()) {
+            writer.write(" " + keyVal.getKey() + ":" + keyVal.getValue());
+        }
+
         writer.newLine();
         writer.flush();
 

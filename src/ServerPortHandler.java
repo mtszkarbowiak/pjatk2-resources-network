@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.util.*;
 
 public class ServerPortHandler extends AbstractPortHandler{
     @Override protected String getLogPrefix() { return "> Server"; }
@@ -63,7 +64,16 @@ public class ServerPortHandler extends AbstractPortHandler{
                 log("Requested registration. (" + request + ")", LogType.In);
                 var identifier = Integer.parseInt(args[1]);
                 var slaveSocketAddress = currentSocket.getRemoteSocketAddress();
-                var pass = slaveRegistry.tryRegister(identifier, slaveSocketAddress);
+
+                var space = new HashMap<String,Integer>(args.length - 2);
+                for (int i = 2; i < args.length; i++) {
+                    var keyVal = args[i].split(":");
+                    var key = keyVal[0];
+                    var val = Integer.parseInt(keyVal[1]);
+                    space.put(key, val);
+                }
+
+                var pass = slaveRegistry.tryRegister(identifier, slaveSocketAddress, space);
 
                 if(pass){
                     writer.write(NetCommands.RegistrationResponseSuccess);
