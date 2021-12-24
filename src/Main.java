@@ -25,10 +25,11 @@ public class Main
 
         var clientPortHandler = new ClientPortHandler(config, internalCommunication);
         var clientPortThread = new Thread(clientPortHandler);
-        clientPortThread.start();
 
         var serverPortHandler = new ServerPortHandler(config, internalCommunication);
         var serverPortThread = new Thread(serverPortHandler);
+
+        clientPortThread.start();
         serverPortThread.start();
     }
 

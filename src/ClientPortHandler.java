@@ -9,21 +9,18 @@ public class ClientPortHandler extends AbstractPortHandler
     private InetSocketAddress masterSocketAddress;
     private boolean isMasterTrue;
 
-    protected String getLogPrefix() { return "Client >"; }
-
-
     public ClientPortHandler(AppConfig config, InternalCommunication internalCommunication) {
         this.config = config;
+        this.internalCommunication = internalCommunication;
         this.friendSocketAddress = new InetSocketAddress(
                 config.getGatewayAddress(),
                 config.getGatewayPort());
-        this.internalCommunication = internalCommunication;
     }
-
 
     @Override
     protected Socket openConnection() throws IOException {
         sleepUntilWork();
+
         var result = new Socket();
 
         if(masterSocketAddress != null)
@@ -123,7 +120,7 @@ public class ClientPortHandler extends AbstractPortHandler
             case NetCommands.RegistrationResponseDeny ->
                     log("Master denied registration.", LogType.In);
 
-            default -> 
+            default ->
                     log("Invalid response (" + response + ")", LogType.Problem);
         }
     }
@@ -148,4 +145,6 @@ public class ClientPortHandler extends AbstractPortHandler
                 log("Waiting idle for " + (totalSleep / 1000) + " sec.", LogType.Info);
         }
     }
+
+    protected String getLogPrefix() { return "Client >"; }
 }

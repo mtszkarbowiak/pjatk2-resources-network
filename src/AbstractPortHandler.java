@@ -17,14 +17,18 @@ public abstract class AbstractPortHandler implements Runnable {
                 final var socket = openConnection();
                 final var writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
                 final var reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
                 useConnection(reader, writer, new ConnectionInfo(socket));
                 socket.close();
-            }catch (IOException exception){
+
+                sleep(getLoopInterval());
+            }
+            catch (IOException exception){
                 log("Error stopped update:", LogType.Problem);
                 exception.printStackTrace();
-                sleep(1000);
+
+                sleep(getReconnectionInterval());
             }
-            sleep(getLoopInterval());
         }
 
         log("Loop terminated.", LogType.Config);
@@ -39,12 +43,15 @@ public abstract class AbstractPortHandler implements Runnable {
     }
 
     protected void log(String s, LogType logType){
-        System.out.println("[" + getLogPrefix() + "] " + logType.getSymbol() + " " + s
-        );
+        System.out.println("[" + getLogPrefix() + "] " + logType.getSymbol() + " " + s);
     }
 
     protected int getLoopInterval(){
-        return 200;
+        return 500;
+    }
+
+    protected int getReconnectionInterval(){
+        return 2500;
     }
 
     public void stop(){
