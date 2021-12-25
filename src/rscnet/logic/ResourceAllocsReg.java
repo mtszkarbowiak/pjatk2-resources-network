@@ -25,7 +25,7 @@ public class ResourceAllocsReg {
         return totalSpace - getTakenSpace();
     }
 
-    public int tryAllocate(int identifier, int amount){
+    public int allocate(int identifier, int amount){
         var union = Math.min(getFreeSpace(), amount);
 
         if(union == 0) return 0;

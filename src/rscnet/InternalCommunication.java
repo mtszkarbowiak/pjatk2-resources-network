@@ -7,7 +7,9 @@ public class InternalCommunication {
     private boolean isRegistered;
 
     private AllocationRequest allocationRequest;
+    private boolean nullifyAllocationRequest = true;
     private String allocationRequestResponse;
+    private boolean nullifyAllocationRequestResponse = true;
 
 
     public InternalCommunication(AppConfig config) {
@@ -26,31 +28,32 @@ public class InternalCommunication {
 
     public synchronized void passAllocationRequest(
             AllocationRequest allocationsRequest) {
+        nullifyAllocationRequest = false;
         this.allocationRequest = allocationsRequest;
     }
 
     public synchronized boolean hasAllocationRequest(){
-        return allocationRequest != null;
+        return nullifyAllocationRequest == false;
     }
 
     public synchronized AllocationRequest getAllocationRequest() {
-        var result = allocationRequest;
-        allocationRequest = null;
-        return result;
+        nullifyAllocationRequest = true;
+        return allocationRequest;
     }
+
 
     public synchronized void passAllocationRequestResponse(
             String allocationRequestResponse){
+        nullifyAllocationRequestResponse = false;
         this.allocationRequestResponse = allocationRequestResponse;
     }
 
     public synchronized boolean hasAllocationRequestResponse() {
-        return allocationRequestResponse != null;
+        return nullifyAllocationRequestResponse == false;
     }
 
     public synchronized String getAllocationRequestResponse() {
-        var result = allocationRequestResponse;
-        allocationRequest = null;
-        return result;
+        nullifyAllocationRequestResponse = true;
+        return allocationRequestResponse;
     }
 }

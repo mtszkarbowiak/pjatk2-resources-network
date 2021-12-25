@@ -2,7 +2,6 @@ package rscnet.logic;
 
 import rscnet.data.AllocationRequest;
 
-import java.net.InetSocketAddress;
 import java.util.*;
 
 public class AllocationResults {
@@ -10,25 +9,47 @@ public class AllocationResults {
     private final Map<String, Integer> pending;
     private final StringBuilder logger;
 
-    public static AllocationResults allocate(AllocationRequest request, NetworkStatus networkStatus){
-        var result = new AllocationResults(request);
+    public static AllocationResults tryAllocate(AllocationRequest request, NetworkStatus networkStatus){
 
-        result.allocate(networkStatus);
+        boolean requestPossible = true;
+        for (var name : request.getDemandedResources()) {
+            var quantity = request.getDemandedQuantity(name);
+            var freeSpace = networkStatus.getFreeResourceSpace(name);
 
-        return result;
-    }
+            System.out.println("Req: " + name + "Q: " + quantity + " S: " + freeSpace);
 
-    private AllocationResults(AllocationRequest request) {
-        this.logger = new StringBuilder();
-        this.request = request;
-        this.pending = new HashMap<>();
-
-        for (var resource : request.getDemandedResources()) {
-            var quantity = request.getDemandedQuantity(resource);
-            pending.put(resource, quantity);
+            if(freeSpace < quantity){
+                requestPossible = false;
+                break;
+            }
         }
 
-        removeZeros();
+        if(requestPossible)
+        {
+            var logger = new StringBuilder();
+            var pending = new HashMap<String, Integer>();
+            var result = new AllocationResults(request, pending, logger);
+
+            for (var resource : request.getDemandedResources()) {
+                var quantity = request.getDemandedQuantity(resource);
+                pending.put(resource, quantity);
+            }
+
+            result.removeZeros();
+            result.allocate(networkStatus);
+
+            return result;
+        }
+        else
+        {
+            return new AllocationResults(request, new HashMap<>(), new StringBuilder("FAILED"));
+        }
+    }
+
+    public AllocationResults(AllocationRequest request, Map<String, Integer> pending, StringBuilder logger) {
+        this.request = request;
+        this.pending = pending;
+        this.logger = logger;
     }
 
     private void allocate(NetworkStatus network){
@@ -40,7 +61,7 @@ public class AllocationResults {
     private void allocate(HostStatus host){
         for (var rscName : pending.keySet()) {
             var amount = pending.get(rscName);
-            var alloced = host.tryAllocate(rscName, request.getClientIdentifier(), amount);
+            var alloced = host.allocate(rscName, request.getClientIdentifier(), amount);
 
             pending.replace(rscName, amount - alloced);
 
@@ -63,12 +84,8 @@ public class AllocationResults {
         pending.entrySet().removeIf(entry -> entry.getValue().equals(0));
     }
 
-    public boolean isEmpty(){
-        return pending.isEmpty();
-    }
-
     @Override
     public String toString() {
-        return isEmpty() ? logger.toString() : "FAILED";
+        return logger.toString();
     }
 }

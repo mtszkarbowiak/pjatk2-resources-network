@@ -23,11 +23,19 @@ public class HostStatus {
         return metadata;
     }
 
-    public int tryAllocate(String rscName, int identifier, int amount){
+    public int allocate(String rscName, int identifier, int amount){
         var allocsReg = resourceAllocsRegMap.getOrDefault(rscName, null);
 
         if(allocsReg == null) return 0;
 
-        return allocsReg.tryAllocate(identifier, amount);
+        return allocsReg.allocate(identifier, amount);
+    }
+
+    public int getFreeResourceSpace(String rscName) {
+        var reg = resourceAllocsRegMap.getOrDefault(rscName, null);
+
+        if(reg == null) return 0;
+
+        return reg.getFreeSpace();
     }
 }

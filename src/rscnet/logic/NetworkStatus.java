@@ -25,4 +25,14 @@ public class NetworkStatus {
     public Set<HostStatus> getHosts() {
         return hosts;
     }
+
+    public int getFreeResourceSpace(String rscName){
+        var result = 0;
+
+        for (var host : hosts) {
+            result += host.getFreeResourceSpace(rscName);
+        }
+
+        return result;
+    }
 }

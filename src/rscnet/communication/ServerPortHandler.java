@@ -116,7 +116,7 @@ public class ServerPortHandler extends AbstractPortHandler{
         {
             log("Incoming (interpreted allocations) request: " + request, LogType.In);
 
-            var allocationBuilder = AllocationResults.allocate(allocationsRequest, networkStatus);
+            var allocationBuilder = AllocationResults.tryAllocate(allocationsRequest, networkStatus);
 
             writer.write(allocationBuilder.toString());
             writer.flush();
