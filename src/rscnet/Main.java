@@ -2,6 +2,7 @@ package rscnet;
 
 import rscnet.communication.ClientPortHandler;
 import rscnet.communication.ServerPortHandler;
+import rscnet.data.AppConfig;
 
 import java.net.*;
 

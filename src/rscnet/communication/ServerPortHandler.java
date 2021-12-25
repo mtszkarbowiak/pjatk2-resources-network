@@ -1,6 +1,7 @@
 package rscnet.communication;
 
 import rscnet.*;
+import rscnet.data.*;
 import rscnet.logic.*;
 
 import java.io.*;
@@ -10,10 +11,9 @@ import java.util.*;
 public class ServerPortHandler extends AbstractPortHandler{
     @Override protected String getLogPrefix() { return "> Server"; }
 
-    private final int totalAllocationTimeout = 15_000; // 15 secs
     private final AppConfig config;
     private final InternalCommunication internalCommunication;
-    private final SlaveRegistry slaveRegistry;
+    private final NetworkStatus networkStatus;
     private ServerSocket serverSocket;
 
     public ServerPortHandler(AppConfig config, InternalCommunication internalCommunication) {
@@ -22,17 +22,22 @@ public class ServerPortHandler extends AbstractPortHandler{
 
 
         if(config.isMasterHost()){
-            slaveRegistry = new SlaveRegistry();
+            networkStatus = new NetworkStatus();
             try {
                 log("Registrating the Master into slave registry.", LogType.Info);
-                slaveRegistry.tryRegister(
-                        config.getIdentifier(),
-                        new InetSocketAddress(InetAddress.getLocalHost(), config.getHostingPort()), config.getResourcesSpaces());
+
+                var hostMetadata = new HostMetadata(
+                    new InetSocketAddress(InetAddress.getLocalHost(), config.getHostingPort()),
+                    config.getIdentifier(),
+                    config.getResourcesSpaces()
+                );
+
+                networkStatus.tryRegister(hostMetadata);
             } catch (UnknownHostException e) {
                 e.printStackTrace();
             }
         }else{
-            slaveRegistry = null;
+            networkStatus = null;
         }
     }
 
@@ -86,7 +91,7 @@ public class ServerPortHandler extends AbstractPortHandler{
             space.put(key, val);
         }
 
-        var pass = slaveRegistry.tryRegister(identifier, slaveSocketAddress, space);
+        var pass = networkStatus.tryRegister(new HostMetadata(slaveSocketAddress, identifier, space));
 
         if(pass){
             writer.write(NetCommands.RegistrationResponseSuccess);
@@ -110,14 +115,12 @@ public class ServerPortHandler extends AbstractPortHandler{
             log("Incoming (interpreted allocations) request: " + request, LogType.In);
 
             var allocationsRequest = new AllocationRequest(request);
-            AllocationResultsBuilder allocationResultsBuilder = new AllocationResultsBuilder();
-            AllocationRequest rest = slaveRegistry.tryAllocate(allocationsRequest, allocationResultsBuilder);
+            var allocationBuilder = AllocationResults.allocate(allocationsRequest, networkStatus);
 
-            if(rest.getResources().size() > 0) allocationResultsBuilder.markFailed();
-
-            writer.write(allocationResultsBuilder.toString());
+            writer.write(allocationBuilder.toString());
             writer.flush();
-            log("Sending results: \n" + allocationResultsBuilder, LogType.Out);
+
+            log("Sending results: \n" + allocationBuilder, LogType.Out);
         }else{
             log("Handling allocation requests from sub-host/slave is not yet implemented.",LogType.Problem);
         }

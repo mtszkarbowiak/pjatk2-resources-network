@@ -1,5 +1,7 @@
 package rscnet;
 
+import rscnet.data.AppConfig;
+
 public class InternalCommunication {
     private AppConfig config;
     private boolean isRegistered;

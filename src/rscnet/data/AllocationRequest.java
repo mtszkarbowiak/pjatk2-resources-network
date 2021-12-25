@@ -1,7 +1,6 @@
-package rscnet;
+package rscnet.data;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class AllocationRequest {
     private final int clientIdentifier;
@@ -52,25 +51,11 @@ public class AllocationRequest {
         return clientIdentifier;
     }
 
-    public Map<String, Integer> getResources() {
-        return resources;
+    public Set<String> getDemandedResources(){
+        return resources.keySet();
     }
 
-    public AllocationRequest reduce(String resourceName, int amount){
-        var newMap = new HashMap<>(this.resources);
-
-        var prev = newMap.get(resourceName);
-        var newVal = prev - amount;
-
-        if(newVal > 0)
-            newMap.put(resourceName, newVal);
-        else if(newVal == 0)
-            newMap.remove(resourceName);
-        else{
-            newMap.remove(resourceName);
-            System.out.println("DATA INTEGRITY PROBLEM");
-        }
-
-        return new AllocationRequest(this.getClientIdentifier(), newMap);
+    public int getDemandedQuantity(String name){
+        return resources.getOrDefault(name, 0);
     }
 }

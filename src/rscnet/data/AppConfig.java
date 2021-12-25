@@ -1,4 +1,4 @@
-package rscnet;
+package rscnet.data;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -94,7 +94,7 @@ public class AppConfig {
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
-        str.append("rscnet.AppConfig{ ID=");
+        str.append("rscnet.data.AppConfig{ ID=");
         str.append(identifier);
         str.append(" HostingPort=");
         str.append(hostingPort);
