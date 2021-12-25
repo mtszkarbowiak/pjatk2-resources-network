@@ -123,7 +123,7 @@ public class ServerPortHandler extends AbstractPortHandler{
 
             log("Sending results: \n" + allocationBuilder, LogType.Out);
         }else{
-            log("Passing allocation request to client.",LogType.Info);
+            log("Passing allocation request to client.", LogType.Info);
 
             internalCommunication.passAllocationRequest(allocationsRequest);
 

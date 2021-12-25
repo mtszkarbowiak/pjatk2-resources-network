@@ -65,6 +65,8 @@ public class AllocationResults {
 
             pending.replace(rscName, amount - alloced);
 
+            if(alloced == 0) continue;
+
             logger.append(rscName);
             logger.append(':');
             logger.append(alloced);
