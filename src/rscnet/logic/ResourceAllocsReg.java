@@ -11,8 +11,22 @@ public class ResourceAllocsReg {
         this.records = new HashMap<>();
     }
 
+    public int getTakenSpace(){
+        var result = 0;
+
+        for (var value : records.values()) {
+            result += value;
+        }
+
+        return result;
+    }
+
+    public int getFreeSpace(){
+        return totalSpace - getTakenSpace();
+    }
+
     public int tryAllocate(int identifier, int amount){
-        var union = Math.min(totalSpace, amount);
+        var union = Math.min(getFreeSpace(), amount);
 
         if(union == 0) return 0;
 
