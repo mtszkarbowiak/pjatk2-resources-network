@@ -110,11 +110,12 @@ public class ServerPortHandler extends AbstractPortHandler{
 
 
     private void handleAllocationRequest(BufferedWriter writer, ConnectionInfo connectionInfo, String request, String[] args) throws IOException {
+        var allocationsRequest = new AllocationRequest(request);
+
         if(config.isMasterHost())
         {
             log("Incoming (interpreted allocations) request: " + request, LogType.In);
 
-            var allocationsRequest = new AllocationRequest(request);
             var allocationBuilder = AllocationResults.allocate(allocationsRequest, networkStatus);
 
             writer.write(allocationBuilder.toString());
@@ -122,7 +123,24 @@ public class ServerPortHandler extends AbstractPortHandler{
 
             log("Sending results: \n" + allocationBuilder, LogType.Out);
         }else{
-            log("Handling allocation requests from sub-host/slave is not yet implemented.",LogType.Problem);
+            log("Passing allocation request to client.",LogType.Info);
+
+            internalCommunication.passAllocationRequest(allocationsRequest);
+
+            int waitCycles = 0;
+            final int interval = 100;
+            while (internalCommunication.hasAllocationRequestResponse() == false){
+                sleep(interval);
+                if((waitCycles++) % (1000 / interval) == 0) log("Waiting...", LogType.Info);
+            }
+
+            String response = internalCommunication.getAllocationRequestResponse();
+            String responseFormat = response.replace(NetCommands.NewLineReplacer,"\n");
+
+            writer.write(responseFormat);
+            writer.flush();
+
+            log("Passing results: \n" + responseFormat, LogType.Out);
         }
     }
 }

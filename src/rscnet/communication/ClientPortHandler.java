@@ -51,6 +51,10 @@ public class ClientPortHandler extends AbstractPortHandler
             requestRegistration(reader, writer);
             return;
         }
+
+        if(internalCommunication.hasAllocationRequest()){
+            requestAllocation(reader, writer);
+        }
     }
 
 
@@ -123,6 +127,29 @@ public class ClientPortHandler extends AbstractPortHandler
         }
     }
 
+    private void requestAllocation(
+            BufferedReader reader,
+            BufferedWriter writer) throws IOException
+    {
+        var request = internalCommunication.getAllocationRequest();
+
+        log("Sending request to the master", LogType.Out);
+        writer.write(request.toString());
+        writer.newLine();
+        writer.flush();
+
+        log("Reading results.", LogType.In);
+        var totalResponse = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null){
+            totalResponse.append(line);
+            totalResponse.append(NetCommands.NewLineReplacer);
+        }
+
+        log("Passing results to the server.", LogType.Info);
+        internalCommunication.passAllocationRequestResponse(totalResponse.toString());
+    }
+
 
     private void sleepUntilWork() {
         int interval = 100;
@@ -131,7 +158,9 @@ public class ClientPortHandler extends AbstractPortHandler
         int totalSleep = 0;
         int logIndex = 1;
 
-        while (internalCommunication.isIdle()) {
+        while ( internalCommunication.isRegistered() &&
+                internalCommunication.hasAllocationRequest() == false)
+        {
             var currentSleepTime = interval;
 
             sleep(currentSleepTime);
