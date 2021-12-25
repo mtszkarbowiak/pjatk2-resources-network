@@ -1,3 +1,7 @@
+package rscnet.logic;
+
+import rscnet.AllocationRequest;
+
 import java.net.*;
 import java.util.*;
 

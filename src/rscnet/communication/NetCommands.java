@@ -1,3 +1,5 @@
+package rscnet.communication;
+
 public class NetCommands {
     // Navigation to Master (SH <-> SH)
     public static final String HeadRequest = "SHOW_MASTER";

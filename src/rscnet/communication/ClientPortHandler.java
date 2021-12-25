@@ -1,3 +1,8 @@
+package rscnet.communication;
+
+import rscnet.AppConfig;
+import rscnet.InternalCommunication;
+
 import java.io.*;
 import java.net.*;
 

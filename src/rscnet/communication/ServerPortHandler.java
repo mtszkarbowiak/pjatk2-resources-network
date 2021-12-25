@@ -1,3 +1,8 @@
+package rscnet.communication;
+
+import rscnet.*;
+import rscnet.logic.*;
+
 import java.io.*;
 import java.net.*;
 import java.util.*;

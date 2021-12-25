@@ -1,3 +1,5 @@
+package rscnet.logic;
+
 import java.util.*;
 
 public class ResourceRegistry {
@@ -51,7 +53,7 @@ class ResourceSubRegistry {
     public int getFreeSpace(){
         int result = capacity - getTotalTakenSpace();
         if(result < 0) System.out.println("INTERNAL DATA INTEGRITY ERROR! " +
-                "(HostResourceRegistry.ResourceRegistry.getFreeSpace())");
+                "(HostResourceRegistry.rscnet.logic.ResourceRegistry.getFreeSpace())");
         return result;
     }
 

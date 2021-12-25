@@ -1,3 +1,7 @@
+package rscnet;
+
+import rscnet.logic.ResourceRegistry;
+
 import java.util.HashMap;
 
 public class Tests {

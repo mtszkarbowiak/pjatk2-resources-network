@@ -1,3 +1,5 @@
+package rscnet.logic;
+
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;

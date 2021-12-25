@@ -1,3 +1,5 @@
+package rscnet.communication;
+
 import java.io.*;
 import java.net.*;
 

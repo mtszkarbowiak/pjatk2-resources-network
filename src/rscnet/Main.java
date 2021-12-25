@@ -1,3 +1,8 @@
+package rscnet;
+
+import rscnet.communication.ClientPortHandler;
+import rscnet.communication.ServerPortHandler;
+
 import java.net.*;
 
 public class Main
