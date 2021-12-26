@@ -1,14 +1,17 @@
 package rscnet.communication;
 
+import rscnet.logging.LogType;
+import rscnet.logging.Logger;
+
 import java.io.*;
 import java.net.*;
 
-public abstract class AbstractPortHandler implements Runnable {
+public abstract class AbstractPortHandler extends Logger implements Runnable {
     private boolean keepAlive = true;
 
     protected abstract Socket openConnection() throws IOException;
     protected abstract void useConnection(BufferedReader reader, BufferedWriter writer, ConnectionInfo connectionInfo) throws IOException;
-    protected abstract String getLogPrefix();
+
 
     @Override
     public void run() {
@@ -44,10 +47,6 @@ public abstract class AbstractPortHandler implements Runnable {
         }
     }
 
-    protected void log(String s, LogType logType){
-        System.out.println("[" + getLogPrefix() + "] " + logType.getSymbol() + " " + s);
-    }
-
     protected int getLoopInterval(){
         return 50;
     }
@@ -78,23 +77,5 @@ class ConnectionInfo{
 
     public InetSocketAddress getInetSocketAddress(){
         return new InetSocketAddress(getInetAddress(), socket.getPort());
-    }
-}
-
-enum LogType{
-    Info("(i)"),
-    Config("[#]"),
-    In("* <-"),
-    Out("* ->"),
-    Problem("/!\\");
-
-    String symbol;
-
-    public String getSymbol(){
-        return symbol;
-    }
-
-    LogType(String symbol) {
-        this.symbol = symbol;
     }
 }

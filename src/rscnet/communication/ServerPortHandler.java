@@ -2,6 +2,7 @@ package rscnet.communication;
 
 import rscnet.*;
 import rscnet.data.*;
+import rscnet.logging.*;
 import rscnet.logic.*;
 
 import java.io.*;
