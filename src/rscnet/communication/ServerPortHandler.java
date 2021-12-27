@@ -126,16 +126,16 @@ public class ServerPortHandler extends AbstractPortHandler{
         }else{
             log("Passing allocation request to client.", LogType.Info);
 
-            internalCommunication.passAllocationRequest(allocationsRequest);
+            internalCommunication.allocationRequestInternalPass.pass(allocationsRequest);
 
             int waitCycles = 0;
             final int interval = 100;
-            while (internalCommunication.hasAllocationRequestResponse() == false){
+            while (internalCommunication.allocationResponseInternalPass.hasValue() == false){
                 sleep(interval);
                 if((waitCycles++) % (1000 / interval) == 0) log("Waiting...", LogType.Info);
             }
 
-            String response = internalCommunication.getAllocationRequestResponse();
+            String response = internalCommunication.allocationResponseInternalPass.getValue();
             String responseFormat = response.replace(NetCommands.NewLineReplacer,"\n");
 
             writer.write(responseFormat);

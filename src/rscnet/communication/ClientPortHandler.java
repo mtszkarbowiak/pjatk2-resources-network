@@ -53,7 +53,7 @@ public class ClientPortHandler extends AbstractPortHandler
             return;
         }
 
-        if(internalCommunication.hasAllocationRequest()){
+        if(internalCommunication.allocationRequestInternalPass.hasValue()){
             requestAllocation(reader, writer);
         }
     }
@@ -132,7 +132,7 @@ public class ClientPortHandler extends AbstractPortHandler
             BufferedReader reader,
             BufferedWriter writer) throws IOException
     {
-        var request = internalCommunication.getAllocationRequest();
+        var request = internalCommunication.allocationRequestInternalPass.getValue();
 
         log("Sending request to the master", LogType.Out);
         writer.write(request.toString());
@@ -148,7 +148,7 @@ public class ClientPortHandler extends AbstractPortHandler
         }
 
         log("Passing results to the server.", LogType.Info);
-        internalCommunication.passAllocationRequestResponse(totalResponse.toString());
+        internalCommunication.allocationResponseInternalPass.pass(totalResponse.toString());
     }
 
 
@@ -160,7 +160,7 @@ public class ClientPortHandler extends AbstractPortHandler
         int logIndex = 1;
 
         while ( internalCommunication.isRegistered() &&
-                internalCommunication.hasAllocationRequest() == false)
+                internalCommunication.allocationRequestInternalPass.hasValue() == false)
         {
             var currentSleepTime = interval;
 
