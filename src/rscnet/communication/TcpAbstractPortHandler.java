@@ -6,7 +6,7 @@ import rscnet.logging.Logger;
 import java.io.*;
 import java.net.*;
 
-public abstract class AbstractPortHandler extends Logger implements Runnable {
+public abstract class TcpAbstractPortHandler extends Logger implements Runnable {
     private boolean keepAlive = true;
 
     protected abstract Socket openConnection() throws IOException;

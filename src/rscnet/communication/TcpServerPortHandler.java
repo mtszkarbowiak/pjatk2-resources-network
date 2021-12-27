@@ -9,7 +9,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class ServerPortHandler extends AbstractPortHandler{
+public class TcpServerPortHandler extends TcpAbstractPortHandler {
     @Override protected String getLogPrefix() { return "> Server"; }
 
     private final AppConfig config;
@@ -17,7 +17,7 @@ public class ServerPortHandler extends AbstractPortHandler{
     private final NetworkStatus networkStatus;
     private ServerSocket serverSocket;
 
-    public ServerPortHandler(AppConfig config, InternalCommunication internalCommunication) {
+    public TcpServerPortHandler(AppConfig config, InternalCommunication internalCommunication) {
         this.config = config;
         this.internalCommunication = internalCommunication;
 

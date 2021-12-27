@@ -7,7 +7,7 @@ import rscnet.logging.*;
 import java.io.*;
 import java.net.*;
 
-public class ClientPortHandler extends AbstractPortHandler
+public class TcpClientPortHandler extends TcpAbstractPortHandler
 {
     private final AppConfig config;
     private final InternalCommunication internalCommunication;
@@ -15,7 +15,7 @@ public class ClientPortHandler extends AbstractPortHandler
     private InetSocketAddress masterSocketAddress;
     private boolean isMasterTrue;
 
-    public ClientPortHandler(AppConfig config, InternalCommunication internalCommunication) {
+    public TcpClientPortHandler(AppConfig config, InternalCommunication internalCommunication) {
         this.config = config;
         this.internalCommunication = internalCommunication;
         this.friendSocketAddress = new InetSocketAddress(
