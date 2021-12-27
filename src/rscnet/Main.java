@@ -1,7 +1,7 @@
 package rscnet;
 
-import rscnet.communication.TcpClientPortHandler;
-import rscnet.communication.TcpServerPortHandler;
+import rscnet.communication.ClientPortHandler;
+import rscnet.communication.ServerPortHandler;
 import rscnet.data.AppConfig;
 
 import java.net.*;
@@ -29,10 +29,10 @@ public class Main
     private static void startAsSlave(AppConfig config){
         var internalCommunication = new InternalCommunication();
 
-        var clientPortHandler = new TcpClientPortHandler(config, internalCommunication);
+        var clientPortHandler = new ClientPortHandler(config, internalCommunication);
         var clientPortThread = new Thread(clientPortHandler);
 
-        var serverPortHandler = new TcpServerPortHandler(config, internalCommunication);
+        var serverPortHandler = new ServerPortHandler(config, internalCommunication);
         var serverPortThread = new Thread(serverPortHandler);
 
         clientPortThread.start();
@@ -42,7 +42,7 @@ public class Main
     private static void startAsMaster(AppConfig config){
         var internalCommunication = new InternalCommunication();
 
-        var serverPortHandler = new TcpServerPortHandler(config, internalCommunication);
+        var serverPortHandler = new ServerPortHandler(config, internalCommunication);
         var serverPortThread = new Thread(serverPortHandler);
 
         serverPortThread.start();

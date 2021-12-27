@@ -9,7 +9,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class TcpServerPortHandler extends TcpAbstractPortHandler {
+public class ServerPortHandler extends AbstractPortHandler {
     @Override protected String getLogPrefix() { return "> Server"; }
 
     private final AppConfig config;
@@ -17,7 +17,7 @@ public class TcpServerPortHandler extends TcpAbstractPortHandler {
     private final NetworkStatus networkStatus;
     private ServerSocket serverSocket;
 
-    public TcpServerPortHandler(AppConfig config, InternalCommunication internalCommunication) {
+    public ServerPortHandler(AppConfig config, InternalCommunication internalCommunication) {
         this.config = config;
         this.internalCommunication = internalCommunication;
 
@@ -43,46 +43,52 @@ public class TcpServerPortHandler extends TcpAbstractPortHandler {
     }
 
     @Override
-    protected Socket openConnection() throws IOException {
-        serverSocket = new ServerSocket(config.getHostingPort());
-        return serverSocket.accept();
+    protected Connection openConnection() throws IOException {
+        var hostingPort = config.getHostingPort();
+        serverSocket = new ServerSocket(hostingPort);
+        var socket = serverSocket.accept();
+
+        return new ReliableConnection(socket);
     }
 
     @Override
-    protected void useConnection(BufferedReader reader, BufferedWriter writer, ConnectionInfo connectionInfo) throws IOException {
-        final var request = reader.readLine();
+    protected void useConnection(Connection connection) throws IOException {
+        final var request = connection.receive();
         final var args = request.split(" ");
 
         switch (args[0]) {
-            case NetCommands.HeadRequest -> handleHeadRequest(writer, request);
-            case NetCommands.RegistrationRequest -> handleRegistrationRequest(writer, connectionInfo, request, args);
-            default -> handleAllocationRequest(writer, connectionInfo, request, args);
+            case NetCommands.HeadRequest -> handleHeadRequest(connection, request);
+            case NetCommands.RegistrationRequest -> handleRegistrationRequest(connection, request, args);
+            default -> handleAllocationRequest(connection, request, args);
         }
 
         serverSocket.close();
     }
 
 
-    private void handleHeadRequest(BufferedWriter writer, String request) throws IOException {
+    private void handleHeadRequest(Connection connection, String request) throws IOException {
         log("Requested sign to master. (" + request + ")", LogType.In);
+
+        var str = new StringBuilder();
         if (config.isMasterHost()) {
-            writer.write(NetCommands.HeadResponseMeMaster);
+            str.append(NetCommands.HeadResponseMeMaster);
             log("Responded it's me.", LogType.Out);
         } else {
-            writer.write(NetCommands.HeadResponseAboutMaster
-                    + " " + config.getGatewayAddress().getHostAddress()
-                    + " " + config.getGatewayPort());
+            str.append(NetCommands.HeadResponseAboutMaster + " ")
+                    .append(config.getGatewayAddress().getHostAddress())
+                    .append(" ")
+                    .append(config.getGatewayPort());
             log("Responded with address to someone else to ask.", LogType.Out);
         }
-        writer.newLine();
-        writer.flush();
+
+        connection.send(str.toString());
     }
 
 
-    private void handleRegistrationRequest(BufferedWriter writer, ConnectionInfo connectionInfo, String request, String[] args) throws IOException {
+    private void handleRegistrationRequest(Connection connection, String request, String[] args) throws IOException {
         log("Requested registration. (" + request + ")", LogType.In);
         var identifier = Integer.parseInt(args[1]);
-        var slaveSocketAddress = connectionInfo.getInetSocketAddress();
+        var slaveSocketAddress = connection.getRemoteSocketAddress();
 
         var space = new HashMap<String,Integer>(args.length - 2);
         for (int i = 2; i < args.length; i++) {
@@ -95,22 +101,18 @@ public class TcpServerPortHandler extends TcpAbstractPortHandler {
         var pass = networkStatus.tryRegister(new HostMetadata(slaveSocketAddress, identifier, space));
 
         if(pass){
-            writer.write(NetCommands.RegistrationResponseSuccess);
-            writer.newLine();
-            writer.flush();
+            connection.send(NetCommands.RegistrationResponseSuccess);
 
             log("Accepted registration.", LogType.Out);
         }else{
-            writer.write(NetCommands.RegistrationResponseDeny);
-            writer.newLine();
-            writer.flush();
+            connection.send(NetCommands.RegistrationResponseDeny);
 
             log("Denied.", LogType.Out);
         }
     }
 
 
-    private void handleAllocationRequest(BufferedWriter writer, ConnectionInfo connectionInfo, String request, String[] args) throws IOException {
+    private void handleAllocationRequest(Connection connection, String request, String[] args) throws IOException {
         var allocationsRequest = new AllocationRequest(request);
 
         if(config.isMasterHost())
@@ -119,8 +121,7 @@ public class TcpServerPortHandler extends TcpAbstractPortHandler {
 
             var allocationBuilder = AllocationResults.tryAllocate(allocationsRequest, networkStatus);
 
-            writer.write(allocationBuilder.toString());
-            writer.flush();
+            connection.send(allocationBuilder.toString());
 
             log("Sending results: \n" + allocationBuilder, LogType.Out);
         }else{
@@ -138,8 +139,7 @@ public class TcpServerPortHandler extends TcpAbstractPortHandler {
             String response = internalCommunication.allocationResponseInternalPass.getValue();
             String responseFormat = response.replace(NetCommands.NewLineReplacer,"\n");
 
-            writer.write(responseFormat);
-            writer.flush();
+            connection.send(responseFormat);
 
             log("Passing results: \n" + responseFormat, LogType.Out);
         }

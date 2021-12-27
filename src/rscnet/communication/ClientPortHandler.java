@@ -7,7 +7,7 @@ import rscnet.logging.*;
 import java.io.*;
 import java.net.*;
 
-public class TcpClientPortHandler extends TcpAbstractPortHandler
+public class ClientPortHandler extends AbstractPortHandler
 {
     private final AppConfig config;
     private final InternalCommunication internalCommunication;
@@ -15,7 +15,7 @@ public class TcpClientPortHandler extends TcpAbstractPortHandler
     private InetSocketAddress masterSocketAddress;
     private boolean isMasterTrue;
 
-    public TcpClientPortHandler(AppConfig config, InternalCommunication internalCommunication) {
+    public ClientPortHandler(AppConfig config, InternalCommunication internalCommunication) {
         this.config = config;
         this.internalCommunication = internalCommunication;
         this.friendSocketAddress = new InetSocketAddress(
@@ -24,44 +24,38 @@ public class TcpClientPortHandler extends TcpAbstractPortHandler
     }
 
     @Override
-    protected Socket openConnection() throws IOException {
+    protected Connection openConnection() throws IOException {
         sleepUntilWork();
 
         var result = new Socket();
+        var address =
+                masterSocketAddress != null ? masterSocketAddress : friendSocketAddress;
 
-        if(masterSocketAddress != null)
-            result.connect(masterSocketAddress);
-        else
-            result.connect(friendSocketAddress);
+        result.connect(address);
 
-        return result;
+        return new ReliableConnection(result);
     }
 
     @Override
-    protected void useConnection(
-            BufferedReader reader,
-            BufferedWriter writer,
-            ConnectionInfo connectionInfo) throws IOException
+    protected void useConnection(Connection connection) throws IOException
     {
         if(isMasterTrue == false){
-            requestMasterAddress(reader, writer);
+            requestMasterAddress(connection);
             return;
         }
 
         if(internalCommunication.registrationConfirmation.getValue() == false){
-            requestRegistration(reader, writer);
+            requestRegistration(connection);
             return;
         }
 
         if(internalCommunication.allocationRequestInternalPass.hasValue()){
-            requestAllocation(reader, writer);
+            requestAllocation(connection);
         }
     }
 
 
-    private void requestMasterAddress(
-            BufferedReader reader,
-            BufferedWriter writer) throws IOException
+    private void requestMasterAddress(Connection connection) throws IOException
     {
         if(masterSocketAddress == null) {
             log("Establishing connection to the base friend.", LogType.Info);
@@ -71,11 +65,9 @@ public class TcpClientPortHandler extends TcpAbstractPortHandler
         }
 
         log("Asking for the master...", LogType.Out);
-        writer.write(NetCommands.HeadRequest);
-        writer.newLine();
-        writer.flush();
+        connection.send(NetCommands.HeadRequest);
 
-        var responseAboutMaster = reader.readLine();
+        var responseAboutMaster = connection.receive();
 
         var args = responseAboutMaster.split(" ");
         switch (args[0]) {
@@ -102,19 +94,24 @@ public class TcpClientPortHandler extends TcpAbstractPortHandler
 
 
     private void requestRegistration(
-            BufferedReader reader,
-            BufferedWriter writer) throws IOException
+            Connection connection) throws IOException
     {
         log("Requesting registration.", LogType.Out);
-        writer.write(NetCommands.RegistrationRequest + " " + config.getIdentifier());
+
+        var msg = new StringBuilder();
+        
+        msg .append(NetCommands.RegistrationRequest + " ")
+            .append(config.getIdentifier());
+
         for (var keyVal : config.getResourcesSpaces().entrySet()) {
-            writer.write(" " + keyVal.getKey() + ":" + keyVal.getValue());
+            msg .append(" ")
+                .append(keyVal.getKey())
+                .append(":")
+                .append(keyVal.getValue());
         }
+        connection.send(msg.toString());
 
-        writer.newLine();
-        writer.flush();
-
-        var response = reader.readLine();
+        var response = connection.receive();
         switch (response) {
             case NetCommands.RegistrationResponseSuccess -> {
                 log("Master successfully registered me.", LogType.In);
@@ -128,21 +125,17 @@ public class TcpClientPortHandler extends TcpAbstractPortHandler
         }
     }
 
-    private void requestAllocation(
-            BufferedReader reader,
-            BufferedWriter writer) throws IOException
+    private void requestAllocation(Connection connection) throws IOException
     {
         var request = internalCommunication.allocationRequestInternalPass.getValue();
 
         log("Sending request to the master", LogType.Out);
-        writer.write(request.toString());
-        writer.newLine();
-        writer.flush();
+        connection.send(request.toString());
 
         log("Reading results.", LogType.In);
         var totalResponse = new StringBuilder();
         String line;
-        while ((line = reader.readLine()) != null){
+        while ((line = connection.receive()) != null){
             totalResponse.append(line);
             totalResponse.append(NetCommands.NewLineReplacer);
         }
