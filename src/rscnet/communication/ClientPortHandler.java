@@ -48,7 +48,7 @@ public class ClientPortHandler extends AbstractPortHandler
             return;
         }
 
-        if(internalCommunication.isRegistered() == false){
+        if(internalCommunication.registrationConfirmation.getValue() == false){
             requestRegistration(reader, writer);
             return;
         }
@@ -118,7 +118,7 @@ public class ClientPortHandler extends AbstractPortHandler
         switch (response) {
             case NetCommands.RegistrationResponseSuccess -> {
                 log("Master successfully registered me.", LogType.In);
-                internalCommunication.markRegistered();
+                internalCommunication.registrationConfirmation.pass(true);
             }
             case NetCommands.RegistrationResponseDeny ->
                     log("Master denied registration.", LogType.In);
@@ -159,7 +159,7 @@ public class ClientPortHandler extends AbstractPortHandler
         int totalSleep = 0;
         int logIndex = 1;
 
-        while ( internalCommunication.isRegistered() &&
+        while ( internalCommunication.registrationConfirmation.getValue() &&
                 internalCommunication.allocationRequestInternalPass.hasValue() == false)
         {
             var currentSleepTime = interval;

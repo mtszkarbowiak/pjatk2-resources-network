@@ -27,7 +27,7 @@ public class Main
     }
 
     private static void startAsSlave(AppConfig config){
-        var internalCommunication = new InternalCommunication(config);
+        var internalCommunication = new InternalCommunication();
 
         var clientPortHandler = new ClientPortHandler(config, internalCommunication);
         var clientPortThread = new Thread(clientPortHandler);
@@ -40,7 +40,7 @@ public class Main
     }
 
     private static void startAsMaster(AppConfig config){
-        var internalCommunication = new InternalCommunication(config);
+        var internalCommunication = new InternalCommunication();
 
         var serverPortHandler = new ServerPortHandler(config, internalCommunication);
         var serverPortThread = new Thread(serverPortHandler);
