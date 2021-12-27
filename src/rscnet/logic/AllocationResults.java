@@ -73,7 +73,7 @@ public class AllocationResults {
             logger.append(':');
 
             var address = host.getMetadata().getSocketAddress();
-            logger.append(address.getAddress().getHostName());
+            logger.append(address.getAddress().getHostAddress());
             logger.append(':');
             logger.append(address.getPort());
             logger.append('\n');

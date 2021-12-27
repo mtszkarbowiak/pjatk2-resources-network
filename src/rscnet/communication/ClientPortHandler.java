@@ -99,7 +99,7 @@ public class ClientPortHandler extends AbstractPortHandler
         log("Requesting registration.", LogType.Out);
 
         var msg = new StringBuilder();
-        
+
         msg .append(NetCommands.RegistrationRequest + " ")
             .append(config.getIdentifier());
 
