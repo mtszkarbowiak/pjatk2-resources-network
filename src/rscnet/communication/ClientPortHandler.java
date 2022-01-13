@@ -93,27 +93,28 @@ public class ClientPortHandler extends AbstractPortHandler
                 var masterAddress = InetAddress.getByName(args[1]);
                 var masterPort = Integer.parseInt(args[2]);
                 masterSocketAddress = new InetSocketAddress(masterAddress, masterPort);
+
                 isMasterTrue = false;
-                log("Next over-friend aknowledged: " + masterSocketAddress, LogType.In);
+                log("Next potential master acknowledged: " + masterSocketAddress, LogType.In);
             }
 
             case NetCommands.HeadResponseMeMaster -> {
-                masterSocketAddress = friendSocketAddress;
+                masterSocketAddress = connection.getRemoteSocketAddress();
+
                 isMasterTrue = true;
-                log("Friend is the master!", LogType.In);
+                log("Friend is the master! Master validated.", LogType.In);
             }
 
             case NetCommands.HeadResponseFail -> {
                 masterSocketAddress = null;
                 isMasterTrue = false;
-                log("Friend does not know any master and has no friends.", LogType.In);
+                log("Friend does not know any master and has no friends. (Error)", LogType.In);
             }
         }
     }
 
 
-    private void requestRegistration(
-            Connection connection) throws IOException
+    private void requestRegistration(Connection connection) throws IOException
     {
         log("Requesting registration.", LogType.Out);
 
