@@ -10,8 +10,6 @@ import java.net.*;
 import java.util.*;
 
 public class ServerPortHandler extends AbstractPortHandler {
-    @Override protected String getLogPrefix() { return "> Server"; }
-
     private final AppConfig config;
     private final InternalCommunication internalCommunication;
     private final NetworkStatus networkStatus;
@@ -162,4 +160,7 @@ public class ServerPortHandler extends AbstractPortHandler {
             log("Passing results: \n" + responseFormat, LogType.Out);
         }
     }
+
+    @Override
+    protected String getLogPrefix() { return "> Server"; }
 }

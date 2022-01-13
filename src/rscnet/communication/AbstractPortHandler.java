@@ -4,7 +4,6 @@ import rscnet.logging.LogType;
 import rscnet.logging.Logger;
 
 import java.io.*;
-import java.net.*;
 
 public abstract class AbstractPortHandler extends Logger implements Runnable {
     private boolean keepAlive = true;

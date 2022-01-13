@@ -12,8 +12,6 @@ public class Main
     public static final boolean USE_UNRELIABLE_CONNECTION = true;
 
     public static void main(String[] args) throws UnknownHostException, SocketException {
-        Tests.internalTests(false);
-
         System.out.println("---* PROGRAM START *---");
 
         var config = new AppConfig(args);
@@ -49,6 +47,7 @@ public class Main
         clientPortThread.start();
         serverPortThread.start();
     }
+
 
     private static void startAsMaster(AppConfig config, UnreliableConnectionFactory unreliableConnectionFactory){
         var internalCommunication = new InternalCommunication();

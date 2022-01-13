@@ -28,6 +28,7 @@ public class ClientPortHandler extends AbstractPortHandler
                 config.getGatewayPort());
     }
 
+
     @Override
     protected Connection openConnection() throws IOException {
         sleepUntilWork();
@@ -53,6 +54,7 @@ public class ClientPortHandler extends AbstractPortHandler
 
         return new ReliableConnection(result);
     }
+
 
     @Override
     protected void useConnection(Connection connection) throws IOException
@@ -145,6 +147,7 @@ public class ClientPortHandler extends AbstractPortHandler
         }
     }
 
+
     private void requestAllocation(Connection connection) throws IOException
     {
         var request = internalCommunication.allocationRequestInternalPass.getValue();
@@ -188,5 +191,6 @@ public class ClientPortHandler extends AbstractPortHandler
         }
     }
 
+    @Override
     protected String getLogPrefix() { return "Client >"; }
 }
