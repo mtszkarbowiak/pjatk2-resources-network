@@ -4,12 +4,15 @@ import java.io.*;
 import java.net.*;
 import java.util.concurrent.*;
 import java.nio.charset.StandardCharsets;
+import static rscnet.communication.UnreliableCommunicationUtils.*;
+
 
 public class UnreliableConnectionFactory implements Runnable{
     private DatagramSocket socket;
     private ConcurrentLinkedQueue<UnreliablePacketWrapper> outgoingPacketQueue;
     private ConcurrentHashMap<Long, UnreliableConnection> openConnections;
     private ConcurrentLinkedQueue<UnreliablePacketMeta> waitingConnections;
+    private boolean keepAlive = true;
 
     public UnreliableConnectionFactory(int receiveTimeout, int port) throws SocketException {
         this.socket = new DatagramSocket(port);
@@ -19,7 +22,7 @@ public class UnreliableConnectionFactory implements Runnable{
 
         socket.setSoTimeout(receiveTimeout);
 
-        System.out.println("[[US]] Datagram socket open: " + port);
+        log("Datagram socket open: " + port);
     }
 
     public Connection openUnreliableConnection(InetSocketAddress target){
@@ -57,11 +60,15 @@ public class UnreliableConnectionFactory implements Runnable{
         return result;
     }
 
+    public void terminate(){
+        keepAlive = false;
+    }
+
     @Override
     public void run() {
-        System.out.println("[[US]] Unreliable connection factory started.");
+        log("Unreliable connection factory started.");
 
-        while (true){
+        while (keepAlive){
             try{
                 // Receiving 1 packet.
                 try{
@@ -74,7 +81,7 @@ public class UnreliableConnectionFactory implements Runnable{
                     var wrappedPacket = UnreliablePacketWrapper.parse(message);
                     var connectionId = wrappedPacket.getConnectionId();
 
-                    System.out.println("[[US]] Packet arrived: " + wrappedPacket);
+                    log("Packet arrived: " + wrappedPacket);
 
                     if(openConnections.containsKey(connectionId)){
                         var connection = openConnections.get(connectionId);
@@ -85,9 +92,7 @@ public class UnreliableConnectionFactory implements Runnable{
                         var connection = new UnreliableConnection(address, this, wrappedPacket.getConnectionId());
                         openConnections.put(wrappedPacket.getConnectionId(), connection);
                     }else{
-                        System.out.println("[[US]] WARNING! " +
-                                "Incoming message not corresponding to any opened connection: " +
-                                wrappedPacket);
+                        log("WARNING! Incoming message not corresponding to any opened connection: " +  wrappedPacket);
                     }
                 }
                 catch (SocketTimeoutException ignored){}
@@ -100,16 +105,17 @@ public class UnreliableConnectionFactory implements Runnable{
                     var packet = new DatagramPacket(data, data.length, address);
 
                     socket.send(packet);
-                    System.out.println("[[US]] Packet sent (to " + address + "): " + outgoingPacket.toString());
+                    log("Packet sent (to " + address + "): " + outgoingPacket);
                 }
             }catch(IOException ioException){
-                System.out.println("[[US]] Exception interrupted loop cycle:");
+                log("Exception interrupted loop cycle: ");
+
                 ioException.printStackTrace();
             }
         }
     }
 
-    public void passOutgoingPacket(UnreliablePacketWrapper outgoingPacket) throws IOException {
+    public void passOutgoingPacket(UnreliablePacketWrapper outgoingPacket) {
         outgoingPacketQueue.add(outgoingPacket);
     }
 
@@ -131,6 +137,8 @@ public class UnreliableConnectionFactory implements Runnable{
     }
 }
 
+
+@SuppressWarnings("BusyWait")
 class UnreliableConnection implements Connection {
     private final InetSocketAddress targetAddress;
     private final long id;
@@ -154,10 +162,9 @@ class UnreliableConnection implements Connection {
         messageBufferedReader = null;
 
         lastMessageId++;
-        final var originalMessage = new UnreliablePacketWrapper(
+        var sentMessage = new UnreliablePacketWrapper(
                 id, lastMessageId, 0, UnreliablePacketType.Message,
-                message.replace("\n","::"));
-        var sentMessage = originalMessage;
+                message.replace("\n",LINE_REPRESENTATION));
         for (int attempt = 0; attempt < settings.getSendAttempts(); attempt++) {
             server.passOutgoingPacket(sentMessage);
 
@@ -174,7 +181,7 @@ class UnreliableConnection implements Connection {
     }
 
     @Override
-    public String receive() throws IOException {
+    public String receive() {
         if(messageBufferedReader != null){
             return messageBufferedReader.getNextLineOrNull();
         }
@@ -197,7 +204,7 @@ class UnreliableConnection implements Connection {
     @Override public InetSocketAddress getRemoteSocketAddress() {
         return targetAddress;
     }
-    @Override public void close() throws IOException { server.markAsClosed(id); }
+    @Override public void close() { server.markAsClosed(id); }
 
     public long getId() { return id;  }
 
@@ -208,23 +215,22 @@ class UnreliableConnection implements Connection {
         switch (wrappedPacket.getPacketType()){
             case Message -> {
                 incomingValuePackets.add(wrappedPacket);
-                System.out.println("[[US]] Value packet arrvied.");
+                log("Value packet arrived.");
                 server.passOutgoingPacket(wrappedPacket.createConfirmation()); // ONLY 1 CONFIRMATION
             }
             case Acknowledgement -> {
                 if(wrappedPacket.getMessageId() == lastMessageId) {
-                    System.out.println("[[US]] Packet arrival confirmed.");
+                    log("Packet arrival confirmed.");
                     lastConfirmedMessageId = lastMessageId;
                 }else{
-                    System.out.println("[[US]] Obsolete confirmation arrived. Ignoring.");
+                    log("Obsolete confirmation arrived. Ignoring.");
                 }
             }
-            default -> {
-                throw new IllegalArgumentException("Different packet types not yet implemented.");
-            }
+            default -> throw new IllegalArgumentException("Different packet types not yet implemented.");
         }
     }
 }
+
 
 class UnreliablePacketMessageBufferedReader{
     private String[] lines;
@@ -243,6 +249,7 @@ class UnreliablePacketMessageBufferedReader{
     }
 }
 
+
 class UnreliablePacketMeta{
     public final UnreliablePacketWrapper packet;
     public final InetSocketAddress address;
@@ -253,8 +260,8 @@ class UnreliablePacketMeta{
     }
 }
 
+
 class UnreliablePacketWrapper{
-    private static final String SEPARATOR = "::::";
     private final long connectionId;
     private final int messageId;
     private final int attemptId;
@@ -269,29 +276,25 @@ class UnreliablePacketWrapper{
         this.packetType = packetType;
         this.messageValue = messageValue;
 
-        var s = new StringBuilder();
-
-        s.append(connectionId); // 0
-        s.append(SEPARATOR);
-        s.append(messageId); // 1
-        s.append(SEPARATOR);
-        s.append(attemptId); // 2
-        s.append(SEPARATOR);
-        s.append(packetType.toString()); // 3
-        s.append(SEPARATOR);
-        s.append("EMPTY"); // 4
-        s.append(SEPARATOR);
-        s.append("EMPTY"); // 5
-        s.append(SEPARATOR);
-        s.append(messageValue); // 6
-        s.append(SEPARATOR);
-        // Seperating empty space
-
-        toStringCached = s.toString();
+        toStringCached =
+            connectionId + // 0
+            PROTOCOL_SEPARATOR +
+            messageId + // 1
+            PROTOCOL_SEPARATOR +
+            attemptId + // 2
+            PROTOCOL_SEPARATOR +
+            packetType.toString() + // 3
+            PROTOCOL_SEPARATOR +
+            "EMPTY" + // 4
+            PROTOCOL_SEPARATOR +
+            "EMPTY" + // 5
+            PROTOCOL_SEPARATOR +
+            messageValue + // 6
+            PROTOCOL_SEPARATOR;
     }
 
     public static UnreliablePacketWrapper parse(String text){
-        var elements = text.split(SEPARATOR);
+        var elements = text.split(PROTOCOL_SEPARATOR);
 
         var connectionId = Long.parseLong(elements[0]);
         var messageId = Integer.parseInt(elements[1]);
@@ -345,11 +348,13 @@ class UnreliablePacketWrapper{
     }
 }
 
+
 enum UnreliablePacketType{
     Message,
     Acknowledgement,
     HoldOn,
 }
+
 
 class UnreliableConnectionSettings{
     public int getSendAttempts(){
@@ -363,4 +368,14 @@ class UnreliableConnectionSettings{
     public int getReceiveInterval(){
         return 50;
     }
+}
+
+
+class UnreliableCommunicationUtils{
+    public static void log(String msg){
+        System.out.println("<UC> " + msg);
+    }
+
+    public static final String LINE_REPRESENTATION = "::";
+    public static final String PROTOCOL_SEPARATOR = "::::";
 }
