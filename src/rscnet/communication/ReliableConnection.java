@@ -37,11 +37,6 @@ public class ReliableConnection implements Connection {
     }
 
     @Override
-    public InetSocketAddress getLocalSocketAddress() {
-        return new InetSocketAddress(socket.getLocalAddress(), socket.getLocalPort());
-    }
-
-    @Override
     public void close() throws IOException {
         socket.close();
     }

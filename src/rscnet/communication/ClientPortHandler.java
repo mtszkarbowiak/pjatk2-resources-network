@@ -12,12 +12,17 @@ public class ClientPortHandler extends AbstractPortHandler
     private final AppConfig config;
     private final InternalCommunication internalCommunication;
     private final InetSocketAddress friendSocketAddress;
+    private final UnreliableConnectionFactory unreliableConnectionFactory;
     private InetSocketAddress masterSocketAddress;
     private boolean isMasterTrue;
 
-    public ClientPortHandler(AppConfig config, InternalCommunication internalCommunication) {
+    public ClientPortHandler(
+            AppConfig config,
+            InternalCommunication internalCommunication,
+            UnreliableConnectionFactory unreliableConnectionFactory) {
         this.config = config;
         this.internalCommunication = internalCommunication;
+        this.unreliableConnectionFactory = unreliableConnectionFactory;
         this.friendSocketAddress = new InetSocketAddress(
                 config.getGatewayAddress(),
                 config.getGatewayPort());
@@ -26,6 +31,19 @@ public class ClientPortHandler extends AbstractPortHandler
     @Override
     protected Connection openConnection() throws IOException {
         sleepUntilWork();
+
+        // If possible communicate through unreliable channel.
+        if( isMasterTrue &&
+            internalCommunication.registrationConfirmation.getValue() &&
+            unreliableConnectionFactory != null){
+
+            var unreliableMasterSocketAddress = new InetSocketAddress(
+                    masterSocketAddress.getAddress(),
+                    masterSocketAddress.getPort() + 100);
+
+            return unreliableConnectionFactory.openUnreliableConnection(
+                    unreliableMasterSocketAddress);
+        }
 
         var result = new Socket();
         var address =
@@ -80,6 +98,7 @@ public class ClientPortHandler extends AbstractPortHandler
             }
 
             case NetCommands.HeadResponseMeMaster -> {
+                masterSocketAddress = friendSocketAddress;
                 isMasterTrue = true;
                 log("Friend is the master!", LogType.In);
             }
@@ -133,6 +152,7 @@ public class ClientPortHandler extends AbstractPortHandler
         connection.send(request.toString());
 
         log("Reading results.", LogType.In);
+
         var totalResponse = new StringBuilder();
         String line;
         while ((line = connection.receive()) != null){

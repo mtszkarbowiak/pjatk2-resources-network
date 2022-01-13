@@ -15,11 +15,16 @@ public class ServerPortHandler extends AbstractPortHandler {
     private final AppConfig config;
     private final InternalCommunication internalCommunication;
     private final NetworkStatus networkStatus;
+    private final UnreliableConnectionFactory unreliableConnectionFactory;
     private ServerSocket serverSocket;
 
-    public ServerPortHandler(AppConfig config, InternalCommunication internalCommunication) {
+    public ServerPortHandler(
+            AppConfig config,
+            InternalCommunication internalCommunication,
+            UnreliableConnectionFactory unreliableConnectionFactory) {
         this.config = config;
         this.internalCommunication = internalCommunication;
+        this.unreliableConnectionFactory = unreliableConnectionFactory;
 
 
         if(config.isMasterHost()){
@@ -44,11 +49,24 @@ public class ServerPortHandler extends AbstractPortHandler {
 
     @Override
     protected Connection openConnection() throws IOException {
+        int timeout = 50;
+
         var hostingPort = config.getHostingPort();
         serverSocket = new ServerSocket(hostingPort);
-        var socket = serverSocket.accept();
+        serverSocket.setSoTimeout(timeout);
 
-        return new ReliableConnection(socket);
+        while (true){
+            try{
+                var socket = serverSocket.accept();
+                return new ReliableConnection(socket);
+            }catch (SocketTimeoutException ignored){}
+
+            if(unreliableConnectionFactory == null) continue;
+
+            var result2 = unreliableConnectionFactory.
+                    acceptUnreliableConnectionOrNull(timeout);
+            if(result2 != null) return result2;
+        }
     }
 
     @Override
