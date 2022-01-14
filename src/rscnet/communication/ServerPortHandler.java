@@ -14,15 +14,18 @@ public class ServerPortHandler extends AbstractPortHandler {
     private final InternalCommunication internalCommunication;
     private final NetworkStatus networkStatus;
     private final UnreliableConnectionFactory unreliableConnectionFactory;
+    private final TerminationListener appTerminationRequestHandler;
     private ServerSocket serverSocket;
 
     public ServerPortHandler(
             AppConfig config,
             InternalCommunication internalCommunication,
-            UnreliableConnectionFactory unreliableConnectionFactory) {
+            UnreliableConnectionFactory unreliableConnectionFactory,
+            TerminationListener appTerminationRequestHandler) {
         this.config = config;
         this.internalCommunication = internalCommunication;
         this.unreliableConnectionFactory = unreliableConnectionFactory;
+        this.appTerminationRequestHandler = appTerminationRequestHandler;
 
 
         if(config.isMasterHost()){
@@ -53,7 +56,7 @@ public class ServerPortHandler extends AbstractPortHandler {
         serverSocket = new ServerSocket(hostingPort);
         serverSocket.setSoTimeout(timeout);
 
-        while (true){
+        while (getKeepAlive() == true){
             try{
                 var socket = serverSocket.accept();
                 return new ReliableConnection(socket);
@@ -65,6 +68,8 @@ public class ServerPortHandler extends AbstractPortHandler {
                     acceptUnreliableConnectionOrNull(timeout);
             if(result2 != null) return result2;
         }
+
+        return null;
     }
 
     @Override
@@ -166,14 +171,16 @@ public class ServerPortHandler extends AbstractPortHandler {
     private void handleTerminationRequest(Connection connection, String request, String[] args) throws IOException {
         log("Incoming termination request.", LogType.In);
 
+        connection.send(getAllocInfo());
+
         if(config.isMasterHost())
         {
             log("Termination not fully implemented.", LogType.Problem);
+            appTerminationRequestHandler.terminate();
         }else{
             log("Termination request can not be handled by a slave.", LogType.Problem);
+            appTerminationRequestHandler.terminate(); //TODO Improper.
         }
-
-        connection.send(getAllocInfo());
     }
 
 

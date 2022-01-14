@@ -33,6 +33,9 @@ public class ClientPortHandler extends AbstractPortHandler
     protected Connection openConnection() throws IOException {
         sleepUntilWork();
 
+        if(getKeepAlive() == false)
+            return null;
+
         // If possible communicate through unreliable channel.
         if( isMasterTrue &&
             internalCommunication.registrationConfirmation.getValue() &&
@@ -177,7 +180,8 @@ public class ClientPortHandler extends AbstractPortHandler
         int logIndex = 1;
 
         while ( internalCommunication.registrationConfirmation.getValue() &&
-                internalCommunication.allocationRequestInternalPass.hasValue() == false)
+                internalCommunication.allocationRequestInternalPass.hasValue() == false &&
+                getKeepAlive())
         {
             var currentSleepTime = interval;
 

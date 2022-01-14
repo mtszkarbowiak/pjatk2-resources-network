@@ -15,11 +15,13 @@ public abstract class AbstractPortHandler extends Logger implements Runnable, Te
 
     @Override
     public void run() {
-        log("Starting loop. Init interval: " + getLoopInterval() + "ms", LogType.Config);
+        log("Starting loop. Init interval: " + getLoopInterval() + " ms", LogType.Config);
 
         while (keepAlive){
             try{
                 final var connection = openConnection();
+                if(connection == null) continue;
+
                 useConnection(connection);
                 connection.close();
 
@@ -55,5 +57,9 @@ public abstract class AbstractPortHandler extends Logger implements Runnable, Te
     @Override
     public void terminate(){
         keepAlive = false;
+    }
+
+    protected boolean getKeepAlive(){
+        return keepAlive;
     }
 }
