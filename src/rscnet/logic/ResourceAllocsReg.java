@@ -35,4 +35,8 @@ public class ResourceAllocsReg {
 
         return union;
     }
+
+    public Map<Integer, Integer> getRecordsReadOnly() {
+        return Collections.unmodifiableMap(records);
+    }
 }

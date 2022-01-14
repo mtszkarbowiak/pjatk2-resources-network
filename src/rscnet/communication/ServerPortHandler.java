@@ -75,6 +75,7 @@ public class ServerPortHandler extends AbstractPortHandler {
         switch (args[0]) {
             case NetCommands.HeadRequest -> handleHeadRequest(connection, request);
             case NetCommands.RegistrationRequest -> handleRegistrationRequest(connection, request, args);
+            case NetCommands.TerminationRequest -> handleTerminationRequest(connection, request, args);
             default -> handleAllocationRequest(connection, request, args);
         }
 
@@ -160,6 +161,37 @@ public class ServerPortHandler extends AbstractPortHandler {
             log("Passing results: \n" + responseFormat, LogType.Out);
         }
     }
+
+
+    private void handleTerminationRequest(Connection connection, String request, String[] args) throws IOException {
+        log("Incoming termination request.", LogType.In);
+
+        if(config.isMasterHost())
+        {
+            log("Termination not fully implemented.", LogType.Problem);
+        }else{
+            log("Termination request can not be handled by a slave.", LogType.Problem);
+        }
+
+        connection.send(getAllocInfo());
+    }
+
+
+    private String getAllocInfo(){
+        var sb = new StringBuilder();
+
+        for (var host : networkStatus.getHosts()) {
+            for (var reg : host.getFullAllocInfo()) {
+                sb.append(host.getMetadata().getIdentifier());
+                sb.append('.');
+                sb.append(reg.toString());
+                sb.append('\n');
+            }
+        }
+
+        return sb.toString();
+    }
+
 
     @Override
     protected String getLogPrefix() { return "> Server"; }

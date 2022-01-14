@@ -1,5 +1,7 @@
 package rscnet.communication;
 
+import rscnet.TerminationListener;
+
 import java.io.*;
 import java.net.*;
 import java.util.concurrent.*;
@@ -7,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 import static rscnet.communication.UnreliableCommunicationUtils.*;
 
 
-public class UnreliableConnectionFactory implements Runnable{
+public class UnreliableConnectionFactory implements Runnable, TerminationListener {
     private DatagramSocket socket;
     private ConcurrentLinkedQueue<UnreliablePacketWrapper> outgoingPacketQueue;
     private ConcurrentHashMap<Long, UnreliableConnection> openConnections;
@@ -60,6 +62,7 @@ public class UnreliableConnectionFactory implements Runnable{
         return result;
     }
 
+    @Override
     public void terminate(){
         keepAlive = false;
     }
@@ -113,6 +116,8 @@ public class UnreliableConnectionFactory implements Runnable{
                 ioException.printStackTrace();
             }
         }
+
+        log("Unreliable connection terminated.");
     }
 
     public void passOutgoingPacket(UnreliablePacketWrapper outgoingPacket) {

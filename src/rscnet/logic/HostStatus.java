@@ -1,6 +1,8 @@
 package rscnet.logic;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class HostStatus {
@@ -37,5 +39,16 @@ public class HostStatus {
         if(reg == null) return 0;
 
         return reg.getFreeSpace();
+    }
+
+    public List<FullAllocRecord> getFullAllocInfo(){
+        var result = new ArrayList<FullAllocRecord>();
+        for (var rscAllocReg : resourceAllocsRegMap.entrySet()) {
+            var key = rscAllocReg.getKey();
+            for (var recordKeyVal : rscAllocReg.getValue().getRecordsReadOnly().entrySet()) {
+                result.add(new FullAllocRecord(key, recordKeyVal.getKey(), recordKeyVal.getValue()));
+            }
+        }
+        return result;
     }
 }

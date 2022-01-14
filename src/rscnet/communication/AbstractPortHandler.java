@@ -1,11 +1,12 @@
 package rscnet.communication;
 
+import rscnet.TerminationListener;
 import rscnet.logging.LogType;
 import rscnet.logging.Logger;
 
 import java.io.*;
 
-public abstract class AbstractPortHandler extends Logger implements Runnable {
+public abstract class AbstractPortHandler extends Logger implements Runnable, TerminationListener {
     private boolean keepAlive = true;
 
     protected abstract Connection openConnection() throws IOException;
@@ -51,7 +52,8 @@ public abstract class AbstractPortHandler extends Logger implements Runnable {
         return 2500;
     }
 
-    public void stop(){
+    @Override
+    public void terminate(){
         keepAlive = false;
     }
 }

@@ -93,8 +93,8 @@ public class AppConfig {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder();
-        str.append("rscnet.data.AppConfig{ ID=");
+        var str = new StringBuilder();
+        str.append("AppConfig( ID=");
         str.append(identifier);
         str.append(" HostingPort=");
         str.append(hostingPort);
@@ -118,7 +118,7 @@ public class AppConfig {
             str.append(entry.getValue());
         }
 
-        str.append(" }");
+        str.append(" )");
 
         return str.toString();
     }
