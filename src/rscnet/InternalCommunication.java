@@ -13,12 +13,12 @@ public class InternalCommunication {
             = new InternalPass<>(false, false);
 
 
-    public final InternalPass<Boolean> terminationRequestInternalPass
+    public final InternalPass<Object> terminationRequestInternalPass
             = new InternalPass<>(true);
 
     public final InternalPass<String> terminationResponseInternalPass
             = new InternalPass<>(true);
 
-    public final InternalPass<Boolean> collapseNetworkInternalPass
-             = new InternalPass<>(false, false);
+    public final InternalPass<Object> collapseNetworkInternalPass
+             = new InternalPass<>(true);
 }

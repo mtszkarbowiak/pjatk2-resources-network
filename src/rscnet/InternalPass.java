@@ -22,9 +22,9 @@ public class InternalPass<T> {
     }
 
     public synchronized void pass(
-            T allocationsRequest) {
+            T value) {
         this.hasValue = true;
-        this.value = allocationsRequest;
+        this.value = value;
         this.passIdentifier = UUID.randomUUID();
     }
 

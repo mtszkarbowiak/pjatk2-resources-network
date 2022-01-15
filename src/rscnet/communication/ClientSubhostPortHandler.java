@@ -39,6 +39,7 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
             public boolean keepBlocking() {
                 return internalCommunication.registrationConfirmation.getValue() &&
                        internalCommunication.allocationRequestInternalPass.hasValue() == false &&
+                       internalCommunication.terminationRequestInternalPass.hasValue() == false &&
                        getKeepAlive();
             }
         };
@@ -72,6 +73,7 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
     }
 
 
+    @SuppressWarnings("UnnecessaryReturnStatement")
     @Override
     protected void useConnection(Connection connection) throws IOException
     {
@@ -87,6 +89,12 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
 
         if(internalCommunication.allocationRequestInternalPass.hasValue()){
             requestAllocation(connection);
+            return;
+        }
+
+        if(internalCommunication.terminationRequestInternalPass.hasValue()){
+            requestTermination(connection);
+            return;
         }
     }
 
@@ -168,16 +176,33 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
     {
         var request = internalCommunication.allocationRequestInternalPass.getValue();
 
-        log("Sending request to the master", LogType.Out);
+        log("Sending allocation request to the master", LogType.Out);
         connection.send(request.toString());
 
-        log("Reading results.", LogType.In);
+        log("Reading allocation results.", LogType.In);
         var totalResponse = ConnectionUtils.receiveMultiline(connection);
 
         log("Passing results to the server.", LogType.Info);
         internalCommunication.allocationResponseInternalPass.pass(totalResponse);
     }
 
+
+    private void requestTermination(Connection connection) throws IOException
+    {
+        var ignored = internalCommunication.terminationRequestInternalPass.getValue();
+
+        log("Sending termination request to the master", LogType.Out);
+        connection.send(NetCommands.TerminationRequest);
+
+        log("Reading termination results.", LogType.In);
+        var response = ConnectionUtils.receiveMultiline(connection);
+
+        log("Passing results to the server.", LogType.Info);
+        internalCommunication.terminationResponseInternalPass.pass(response);
+
+        log("MARKING NETWORK TO COLLAPSE", LogType.Info);
+        internalCommunication.collapseNetworkInternalPass.pass(true);
+    }
 
     @Override
     protected String getLogPrefix() { return "Client >"; }

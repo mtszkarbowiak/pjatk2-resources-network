@@ -4,6 +4,7 @@ import rscnet.*;
 import rscnet.data.*;
 import rscnet.logging.*;
 import rscnet.logic.*;
+import rscnet.utils.ThreadBlocking;
 
 import java.io.*;
 import java.net.*;
@@ -80,8 +81,8 @@ public class ServerPortHandler extends AbstractPortHandler {
         switch (args[0]) {
             case NetCommands.HeadRequest -> handleHeadRequest(connection, request);
             case NetCommands.RegistrationRequest -> handleRegistrationRequest(connection, request, args);
-            case NetCommands.TerminationRequest -> handleTerminationRequest(connection, request, args);
-            default -> handleAllocationRequest(connection, request, args);
+            case NetCommands.TerminationRequest -> handleTerminationRequest(connection);
+            default -> handleAllocationRequest(connection, request);
         }
 
         serverSocket.close();
@@ -134,7 +135,7 @@ public class ServerPortHandler extends AbstractPortHandler {
     }
 
 
-    private void handleAllocationRequest(Connection connection, String request, String[] args) throws IOException {
+    private void handleAllocationRequest(Connection connection, String request) throws IOException {
         var allocationsRequest = new AllocationRequest(request);
 
         if(config.isMasterHost())
@@ -168,18 +169,23 @@ public class ServerPortHandler extends AbstractPortHandler {
     }
 
 
-    private void handleTerminationRequest(Connection connection, String request, String[] args) throws IOException {
+    private void handleTerminationRequest(Connection connection) throws IOException {
         log("Incoming termination request.", LogType.In);
-
-        connection.send(getAllocInfo());
 
         if(config.isMasterHost())
         {
-            log("Termination not fully implemented.", LogType.Problem);
-            appTerminationRequestHandler.terminate();
+            connection.send(getAllocInfo());
+            internalCommunication.collapseNetworkInternalPass.pass(new Object());
+
+            log("Termination not fully implemented. (Network Collapse Call passed, but not handled)", LogType.Problem);
         }else{
-            log("Termination request can not be handled by a slave.", LogType.Problem);
-            appTerminationRequestHandler.terminate(); //TODO Improper.
+            internalCommunication.terminationRequestInternalPass.pass(new Object());
+
+            ThreadBlocking.wait(() -> internalCommunication.terminationResponseInternalPass.hasValue() == false, this);
+
+            var response = internalCommunication.terminationResponseInternalPass.getValue();
+
+            connection.send(response);
         }
     }
 
