@@ -1,6 +1,7 @@
 import rscnet.*;
 import rscnet.communication.*;
 import rscnet.data.AppConfig;
+import rscnet.logic.NetworkStatus;
 
 import java.io.IOException;
 import java.net.*;
@@ -12,7 +13,9 @@ import static rscnet.Constants.Async.*;
 public class NetworkNode
 {
     private static boolean keepAlive = true;
-    private static void terminateApp(){ keepAlive = false; }
+    private static void terminateApp(){
+        keepAlive = false;
+    }
 
     public static void main(String[] args) throws IOException {
         try{
@@ -49,7 +52,9 @@ public class NetworkNode
         // Start Communication
 
         UnreliableConnectionFactory unreliableConnectionFactory = null;
-        Thread serverThread, unreliableConnectionsThread = null, clientThread = null;
+        Thread serverThread, clientThread, unreliableConnectionsThread = null;
+        NetworkStatus networkStatus = null;
+        InternalCommunication internalCommunication = new InternalCommunication();
 
         if(USE_UNRELIABLE_CONNECTION){
             unreliableConnectionFactory = new UnreliableConnectionFactory(50, config.getHostingPort() + 100);
@@ -58,20 +63,27 @@ public class NetworkNode
             unreliableConnectionsThread.start();
         }
 
-        var internalCommunication = new InternalCommunication();
-
         if (!masterHostMode) {
             var clientPortHandler = new ClientSubhostPortHandler(
                     config, internalCommunication, unreliableConnectionFactory);
             clientThread = new Thread(clientPortHandler);
-
             terminationListeners.add(clientPortHandler);
-            clientThread.start();
+        }else{
+            networkStatus = new NetworkStatus();
+
+            var clientPortHandler = new ClientMasterPortHandler(
+                    config, internalCommunication, unreliableConnectionFactory,
+                    networkStatus, appTerminationRequestHandler);
+            clientThread = new Thread(clientPortHandler);
+            terminationListeners.add(clientPortHandler);
         }
+        clientThread.start();
+
 
         var serverPortHandler = new ServerPortHandler(
                 config, internalCommunication,
-                unreliableConnectionFactory, appTerminationRequestHandler);
+                unreliableConnectionFactory, appTerminationRequestHandler,
+                networkStatus);
         serverThread = new Thread(serverPortHandler);
 
         terminationListeners.add(serverPortHandler);
@@ -88,6 +100,8 @@ public class NetworkNode
             }catch (InterruptedException ignored){}
         }
 
+        System.out.println("---* TERMINATING *---");
+
         for (var terminable : terminationListeners) {
             System.out.println("Terminating " + terminable.getClass().getName());
             terminable.terminate();
@@ -95,9 +109,7 @@ public class NetworkNode
 
         try {
             serverThread.join();
-
-            if(clientThread != null)
-                clientThread.join();
+            clientThread.join();
 
             if(unreliableConnectionsThread != null)
                 unreliableConnectionsThread.join();

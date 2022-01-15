@@ -146,8 +146,11 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
 
         var msg = new StringBuilder();
 
-        msg .append(REGISTRATION_REQUEST + " ")
-            .append(config.getIdentifier());
+        msg.append(REGISTRATION_REQUEST);
+        msg.append(' ');
+        msg.append(config.getIdentifier());
+        msg.append(' ');
+        msg.append(config.getHostingPort());
 
         for (var keyVal : config.getResourcesSpaces().entrySet()) {
             msg .append(" ")
@@ -199,9 +202,6 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
 
         log("Passing results to the server.", LogType.Info);
         internalCommunication.terminationResponseInternalPass.pass(response);
-
-        log("MARKING NETWORK TO COLLAPSE", LogType.Info);
-        internalCommunication.collapseNetworkInternalPass.pass(true);
     }
 
     @Override

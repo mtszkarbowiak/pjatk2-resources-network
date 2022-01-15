@@ -24,15 +24,15 @@ public class ServerPortHandler extends AbstractPortHandler {
             AppConfig config,
             InternalCommunication internalCommunication,
             UnreliableConnectionFactory unreliableConnectionFactory,
-            TerminationListener appTerminationRequestHandler) {
+            TerminationListener appTerminationRequestHandler,
+            NetworkStatus networkStatus) {
         this.config = config;
         this.internalCommunication = internalCommunication;
         this.unreliableConnectionFactory = unreliableConnectionFactory;
         this.appTerminationRequestHandler = appTerminationRequestHandler;
-
+        this.networkStatus = networkStatus;
 
         if(config.isMasterHost()){
-            networkStatus = new NetworkStatus();
             try {
                 log("Registrating the Master into slave registry.", LogType.Info);
 
@@ -46,8 +46,6 @@ public class ServerPortHandler extends AbstractPortHandler {
             } catch (UnknownHostException e) {
                 e.printStackTrace();
             }
-        }else{
-            networkStatus = null;
         }
     }
 
@@ -84,6 +82,7 @@ public class ServerPortHandler extends AbstractPortHandler {
             case HEAD_REQUEST -> handleHeadRequest(connection, request);
             case REGISTRATION_REQUEST -> handleRegistrationRequest(connection, request, args);
             case TERMINATION_REQUEST -> handleTerminationRequest(connection);
+            case COLLAPSE_REQUEST ->  handleCollapseRequest();
             default -> handleAllocationRequest(connection, request);
         }
 
@@ -113,10 +112,12 @@ public class ServerPortHandler extends AbstractPortHandler {
     private void handleRegistrationRequest(Connection connection, String request, String[] args) throws IOException {
         log("Requested registration. (" + request + ")", LogType.In);
         var identifier = Integer.parseInt(args[1]);
-        var slaveSocketAddress = connection.getRemoteSocketAddress();
+        var port = Integer.parseInt(args[2]);
+        var slaveSocketAddress = new InetSocketAddress(
+                connection.getRemoteSocketAddress().getAddress(), port);
 
         var space = new HashMap<String,Integer>(args.length - 2);
-        for (int i = 2; i < args.length; i++) {
+        for (int i = 3; i < args.length; i++) {
             var keyVal = args[i].split(":");
             var key = keyVal[0];
             var val = Integer.parseInt(keyVal[1]);
@@ -174,7 +175,7 @@ public class ServerPortHandler extends AbstractPortHandler {
             connection.send(getAllocInfo());
             internalCommunication.collapseNetworkInternalPass.pass(new Object());
 
-            log("Termination not fully implemented. (Network Collapse Call passed, but not handled)", LogType.Problem);
+            log("Termination not fully implemented. (Network Collapse Call passed)", LogType.Problem);
         }else{
             internalCommunication.terminationRequestInternalPass.pass(new Object());
 
@@ -187,6 +188,12 @@ public class ServerPortHandler extends AbstractPortHandler {
 
             log("Passing results: \n" + response, LogType.Out);
         }
+    }
+
+
+    private void handleCollapseRequest(){
+        log("Network-Collapse call arrived. Executing...", LogType.In);
+        appTerminationRequestHandler.terminate();
     }
 
 

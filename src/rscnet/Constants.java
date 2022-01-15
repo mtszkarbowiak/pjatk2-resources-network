@@ -4,7 +4,7 @@ public class Constants {
     public class App{
         public static final boolean USE_UNRELIABLE_CONNECTION = true;
         public static final int MAX_APP_LIFETIME = 45_000;
-        public static final int COMPILATION_NO = 15;
+        public static final int COMPILATION_NO = 16;
     }
 
     public class Async{
@@ -26,6 +26,7 @@ public class Constants {
         public static final String REGISTRATION_RESPONSE_SUCCESS = "REG_SLAVE_OK";
 
         public static final String TERMINATION_REQUEST = "TERMINATE";
+        public static final String COLLAPSE_REQUEST = "COLLAPSE";
 
         public static final String HL_LINE_REPLACER = ":::";
     }
