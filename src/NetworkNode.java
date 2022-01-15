@@ -2,6 +2,7 @@ import rscnet.*;
 import rscnet.communication.*;
 import rscnet.data.AppConfig;
 
+import java.io.IOException;
 import java.net.*;
 import java.util.ArrayList;
 
@@ -14,7 +15,18 @@ public class NetworkNode
     private static boolean keepAlive = true;
     private static void terminateApp(){ keepAlive = false; }
 
-    public static void main(String[] args) throws UnknownHostException, SocketException {
+    public static void main(String[] args) throws IOException {
+        try{
+            run(args);
+        }catch (Exception ex){
+            System.out.println("---* RUN INTERRUPTED *---");
+            ex.printStackTrace();
+            //noinspection ResultOfMethodCallIgnored
+            System.in.read();
+        }
+    }
+
+    public static void run(String[] args) throws UnknownHostException, SocketException{
         System.out.println("---* PROGRAM START (" + COMPILATION_NO+ ") *---");
 
 
