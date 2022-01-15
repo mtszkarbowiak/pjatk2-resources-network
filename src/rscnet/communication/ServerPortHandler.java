@@ -63,7 +63,10 @@ public class ServerPortHandler extends AbstractPortHandler {
                 return new ReliableConnection(socket);
             }catch (SocketTimeoutException ignored){}
 
-            if(unreliableConnectionFactory == null) continue;
+            if(unreliableConnectionFactory == null) {
+                if(getKeepAlive()) continue;
+                else return null;
+            }
 
             var result2 = unreliableConnectionFactory.
                     acceptUnreliableConnectionOrNull(timeout);

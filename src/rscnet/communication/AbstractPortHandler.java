@@ -20,22 +20,29 @@ public abstract class AbstractPortHandler extends Logger implements Runnable, Te
         log("Starting loop.", LogType.Config);
 
         while (keepAlive){
+            log("Update: " + getClass().getName(), LogType.Info);
             try{
                 final var connection = openConnection();
-                if(connection == null) continue;
-
-                useConnection(connection);
-                connection.close();
+                if(connection != null)
+                {
+                    useConnection(connection);
+                    connection.close();
+                }
+            }
+            catch (UnreliableConnectionTerminatedException exception)
+            {
+                log("Connections dumped - ending loop.", LogType.Info);
             }
             catch (IOException exception){
-                log("Error stopped update:", LogType.Problem);
+                log("Error stopped an update:", LogType.Problem);
                 exception.printStackTrace();
 
                 sleep(RECONNECTION_INTERVAL);
             }
         }
 
-        log("Loop ended.", LogType.Config);
+        var type = getClass().getName();
+        log("Loop ended: " + type, LogType.Config);
     }
 
     protected void sleep(int ms){

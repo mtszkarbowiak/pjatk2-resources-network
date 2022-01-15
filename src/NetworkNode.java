@@ -59,7 +59,9 @@ public class NetworkNode
         if(USE_UNRELIABLE_CONNECTION){
             unreliableConnectionFactory = new UnreliableConnectionFactory(50, config.getHostingPort() + 100);
             terminationListeners.add(unreliableConnectionFactory);
+
             unreliableConnectionsThread = new Thread(unreliableConnectionFactory);
+            unreliableConnectionsThread.setName("UnreliableChannel");
             unreliableConnectionsThread.start();
         }
 
@@ -77,8 +79,8 @@ public class NetworkNode
             clientThread = new Thread(clientPortHandler);
             terminationListeners.add(clientPortHandler);
         }
+        clientThread.setName("Client");
         clientThread.start();
-
 
         var serverPortHandler = new ServerPortHandler(
                 config, internalCommunication,
@@ -87,6 +89,7 @@ public class NetworkNode
         serverThread = new Thread(serverPortHandler);
 
         terminationListeners.add(serverPortHandler);
+        serverThread.setName("Server");
         serverThread.start();
 
 
@@ -119,5 +122,12 @@ public class NetworkNode
         }
 
         System.out.println("---* PROGRAM TERMINATED *---");
+
+        if(WAIT_AFTER_TERMINATION){
+            try {
+                //noinspection ResultOfMethodCallIgnored
+                System.in.read();
+            } catch (IOException ignored) {}
+        }
     }
 }

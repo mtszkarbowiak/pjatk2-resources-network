@@ -4,7 +4,8 @@ public class Constants {
     public class App{
         public static final boolean USE_UNRELIABLE_CONNECTION = true;
         public static final int MAX_APP_LIFETIME = 45_000;
-        public static final int COMPILATION_NO = 16;
+        public static final int COMPILATION_NO = 17;
+        public static final boolean WAIT_AFTER_TERMINATION = false;
     }
 
     public class Async{

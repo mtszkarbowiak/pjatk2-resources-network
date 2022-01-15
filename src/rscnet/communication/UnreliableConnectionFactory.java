@@ -117,7 +117,7 @@ public class UnreliableConnectionFactory implements Runnable, TerminationListene
             }
         }
 
-        log("Unreliable connection terminated.");
+        log("Unreliable communication loop ended.");
     }
 
     public void passOutgoingPacket(UnreliablePacketWrapper outgoingPacket) {
@@ -139,6 +139,10 @@ public class UnreliableConnectionFactory implements Runnable, TerminationListene
 
     public void markAsClosed(long id) {
         openConnections.remove(id);
+    }
+
+    public boolean isAlive(){
+        return keepAlive;
     }
 }
 
@@ -186,12 +190,12 @@ class UnreliableConnection implements Connection {
     }
 
     @Override
-    public String receive() {
+    public String receive() throws IOException {
         if(messageBufferedReader != null){
             return messageBufferedReader.getNextLineOrNull();
         }
 
-        while (true){
+        while (server.isAlive()){
             try {
                 Thread.sleep(settings.getReceiveInterval());
             } catch (InterruptedException e) {
@@ -204,6 +208,8 @@ class UnreliableConnection implements Connection {
             messageBufferedReader = new UnreliablePacketMessageBufferedReader(packet.getMessageValue());
             return messageBufferedReader.getNextLineOrNull();
         }
+
+        throw new UnreliableConnectionTerminatedException("No packet can be received when the server is being shut down.");
     }
 
     @Override public InetSocketAddress getRemoteSocketAddress() {
