@@ -35,7 +35,7 @@ public abstract class AbstractPortHandler extends Logger implements Runnable, Te
             }
         }
 
-        log("Loop terminated.", LogType.Config);
+        log("Loop ended.", LogType.Config);
     }
 
     protected void sleep(int ms){

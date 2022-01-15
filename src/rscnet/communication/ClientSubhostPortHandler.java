@@ -34,7 +34,17 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
 
     @Override
     protected Connection openConnection() throws IOException {
-        sleepUntilWork();
+        var blocker = new ThreadBlocker() {
+            @Override
+            public boolean keepBlocking() {
+                return internalCommunication.registrationConfirmation.getValue() &&
+                       internalCommunication.allocationRequestInternalPass.hasValue() == false &&
+                       getKeepAlive();
+            }
+        };
+
+        ThreadBlocking.wait(blocker, this);
+
 
         if(getKeepAlive() == false)
             return null;
@@ -146,10 +156,10 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
                 internalCommunication.registrationConfirmation.pass(true);
             }
             case NetCommands.RegistrationResponseDeny ->
-                    log("Master denied registration.", LogType.In);
+                log("Master denied registration.", LogType.In);
 
             default ->
-                    log("Invalid response (" + response + ")", LogType.Problem);
+                log("Invalid response (" + response + ")", LogType.Problem);
         }
     }
 
@@ -168,19 +178,6 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
         internalCommunication.allocationResponseInternalPass.pass(totalResponse);
     }
 
-
-    private void sleepUntilWork() {
-        var blocker = new ThreadBlocker() {
-            @Override
-            public boolean keepBlocking() {
-                return internalCommunication.registrationConfirmation.getValue() &&
-                        internalCommunication.allocationRequestInternalPass.hasValue() == false &&
-                        getKeepAlive();
-            }
-        };
-
-        ThreadBlocking.wait(blocker, this);
-    }
 
     @Override
     protected String getLogPrefix() { return "Client >"; }
