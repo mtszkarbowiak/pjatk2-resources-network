@@ -61,7 +61,7 @@ public class NetworkNode
         var internalCommunication = new InternalCommunication();
 
         if (!masterHostMode) {
-            var clientPortHandler = new ClientPortHandler(
+            var clientPortHandler = new ClientSubhostPortHandler(
                     config, internalCommunication, unreliableConnectionFactory);
             clientThread = new Thread(clientPortHandler);
 

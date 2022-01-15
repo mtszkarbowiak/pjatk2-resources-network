@@ -11,4 +11,14 @@ public class InternalCommunication {
 
     public final InternalPass<Boolean> registrationConfirmation
             = new InternalPass<>(false, false);
+
+
+    public final InternalPass<Boolean> terminationRequestInternalPass
+            = new InternalPass<>(true);
+
+    public final InternalPass<String> terminationResponseInternalPass
+            = new InternalPass<>(true);
+
+    public final InternalPass<Boolean> collapseNetworkInternalPass
+             = new InternalPass<>(false, false);
 }

@@ -2,9 +2,9 @@ package rscnet;
 
 public class Constants {
     public class App{
-        public static final boolean USE_UNRELIABLE_CONNECTION = true;
+        public static final boolean USE_UNRELIABLE_CONNECTION = false;
         public static final int MAX_APP_LIFETIME = 45_000;
-        public static final int COMPILATION_NO = 14;
+        public static final int COMPILATION_NO = 15;
     }
 
     public class Async{

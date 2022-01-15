@@ -3,15 +3,14 @@ package rscnet.communication;
 import rscnet.data.AppConfig;
 import rscnet.InternalCommunication;
 import rscnet.logging.*;
+import rscnet.utils.ConnectionUtils;
 import rscnet.utils.ThreadBlocker;
 import rscnet.utils.ThreadBlocking;
 
 import java.io.*;
 import java.net.*;
 
-import static rscnet.Constants.Async.*;
-
-public class ClientPortHandler extends AbstractPortHandler
+public class ClientSubhostPortHandler extends AbstractPortHandler
 {
     private final AppConfig config;
     private final InternalCommunication internalCommunication;
@@ -20,7 +19,7 @@ public class ClientPortHandler extends AbstractPortHandler
     private InetSocketAddress masterSocketAddress;
     private boolean isMasterTrue;
 
-    public ClientPortHandler(
+    public ClientSubhostPortHandler(
             AppConfig config,
             InternalCommunication internalCommunication,
             UnreliableConnectionFactory unreliableConnectionFactory) {
@@ -163,16 +162,10 @@ public class ClientPortHandler extends AbstractPortHandler
         connection.send(request.toString());
 
         log("Reading results.", LogType.In);
-
-        var totalResponse = new StringBuilder();
-        String line;
-        while ((line = connection.receive()) != null){
-            totalResponse.append(line);
-            totalResponse.append(NetCommands.NewLineReplacer);
-        }
+        var totalResponse = ConnectionUtils.receiveMultiline(connection);
 
         log("Passing results to the server.", LogType.Info);
-        internalCommunication.allocationResponseInternalPass.pass(totalResponse.toString());
+        internalCommunication.allocationResponseInternalPass.pass(totalResponse);
     }
 
 
