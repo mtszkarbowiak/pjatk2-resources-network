@@ -205,9 +205,14 @@ public class ServerPortHandler extends AbstractPortHandler {
 
         for (var host : networkStatus.getHosts()) {
             for (var reg : host.getFullAllocInfo()) {
-                sb.append(host.getMetadata().getIdentifier());
+
+                sb.append(reg.resource);
                 sb.append('.');
-                sb.append(reg.toString());
+                sb.append(reg.quantity);
+                sb.append('.');
+                sb.append(host.getMetadata().getSocketAddress().getAddress().getHostAddress());
+                sb.append('.');
+                sb.append(host.getMetadata().getSocketAddress().getPort());
                 sb.append('\n');
             }
         }

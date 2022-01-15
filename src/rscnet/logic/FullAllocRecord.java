@@ -10,9 +10,4 @@ public class FullAllocRecord {
         this.identifier = identifier;
         this.quantity = quantity;
     }
-
-    @Override
-    public String toString() {
-        return resource + '.' + identifier + '.' + quantity;
-    }
 }
