@@ -37,7 +37,7 @@ public class ServerPortHandler extends AbstractPortHandler {
                 log("Registrating the Master into slave registry.", LogType.Info);
 
                 var hostMetadata = new HostMetadata(
-                    new InetSocketAddress(InetAddress.getLocalHost(), config.getHostingPort()),
+                    new InetSocketAddress(InetAddress.getByName("localhost"), config.getHostingPort()),
                     config.getIdentifier(),
                     config.getResourcesSpaces()
                 );
