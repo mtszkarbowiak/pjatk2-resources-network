@@ -4,12 +4,13 @@ import rscnet.*;
 import rscnet.data.*;
 import rscnet.logging.*;
 import rscnet.logic.*;
-import rscnet.utils.ConnectionUtils;
-import rscnet.utils.ThreadBlocking;
+import rscnet.utils.*;
 
 import java.io.*;
 import java.net.*;
 import java.util.*;
+
+import static rscnet.Constants.NetCommands.*;
 
 public class ServerPortHandler extends AbstractPortHandler {
     private final AppConfig config;
@@ -80,9 +81,9 @@ public class ServerPortHandler extends AbstractPortHandler {
         final var args = request.split(" ");
 
         switch (args[0]) {
-            case NetCommands.HeadRequest -> handleHeadRequest(connection, request);
-            case NetCommands.RegistrationRequest -> handleRegistrationRequest(connection, request, args);
-            case NetCommands.TerminationRequest -> handleTerminationRequest(connection);
+            case HEAD_REQUEST -> handleHeadRequest(connection, request);
+            case REGISTRATION_REQUEST -> handleRegistrationRequest(connection, request, args);
+            case TERMINATION_REQUEST -> handleTerminationRequest(connection);
             default -> handleAllocationRequest(connection, request);
         }
 
@@ -95,10 +96,10 @@ public class ServerPortHandler extends AbstractPortHandler {
 
         var str = new StringBuilder();
         if (config.isMasterHost()) {
-            str.append(NetCommands.HeadResponseMeMaster);
+            str.append(HEAD_RESPONSE_ME_MASTER);
             log("Responded it's me.", LogType.Out);
         } else {
-            str.append(NetCommands.HeadResponseAboutMaster + " ")
+            str.append(HEAD_RESPONSE_ABOUT_MASTER + " ")
                     .append(config.getGatewayAddress().getHostAddress())
                     .append(" ")
                     .append(config.getGatewayPort());
@@ -125,11 +126,11 @@ public class ServerPortHandler extends AbstractPortHandler {
         var pass = networkStatus.tryRegister(new HostMetadata(slaveSocketAddress, identifier, space));
 
         if(pass){
-            connection.send(NetCommands.RegistrationResponseSuccess);
+            connection.send(REGISTRATION_RESPONSE_SUCCESS);
 
             log("Accepted registration.", LogType.Out);
         }else{
-            connection.send(NetCommands.RegistrationResponseDeny);
+            connection.send(REGISTRATION_RESPONSE_DENY);
 
             log("Denied.", LogType.Out);
         }

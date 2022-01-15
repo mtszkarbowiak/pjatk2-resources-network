@@ -3,12 +3,12 @@ package rscnet.communication;
 import rscnet.data.AppConfig;
 import rscnet.InternalCommunication;
 import rscnet.logging.*;
-import rscnet.utils.ConnectionUtils;
-import rscnet.utils.ThreadBlocker;
-import rscnet.utils.ThreadBlocking;
+import rscnet.utils.*;
 
 import java.io.*;
 import java.net.*;
+
+import static rscnet.Constants.NetCommands.*;
 
 public class ClientSubhostPortHandler extends AbstractPortHandler
 {
@@ -109,13 +109,13 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
         }
 
         log("Asking for the master...", LogType.Out);
-        connection.send(NetCommands.HeadRequest);
+        connection.send(HEAD_REQUEST);
 
         var responseAboutMaster = connection.receive();
 
         var args = responseAboutMaster.split(" ");
         switch (args[0]) {
-            case NetCommands.HeadResponseAboutMaster -> {
+            case HEAD_RESPONSE_ABOUT_MASTER -> {
                 var masterAddress = InetAddress.getByName(args[1]);
                 var masterPort = Integer.parseInt(args[2]);
                 masterSocketAddress = new InetSocketAddress(masterAddress, masterPort);
@@ -124,14 +124,14 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
                 log("Next potential master acknowledged: " + masterSocketAddress, LogType.In);
             }
 
-            case NetCommands.HeadResponseMeMaster -> {
+            case HEAD_RESPONSE_ME_MASTER -> {
                 masterSocketAddress = connection.getRemoteSocketAddress();
 
                 isMasterTrue = true;
                 log("Friend is the master! Master validated.", LogType.In);
             }
 
-            case NetCommands.HeadResponseFail -> {
+            case HEAD_RESPONSE_FAIL -> {
                 masterSocketAddress = null;
                 isMasterTrue = false;
                 log("Friend does not know any master and has no friends. (Error)", LogType.In);
@@ -146,7 +146,7 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
 
         var msg = new StringBuilder();
 
-        msg .append(NetCommands.RegistrationRequest + " ")
+        msg .append(REGISTRATION_REQUEST + " ")
             .append(config.getIdentifier());
 
         for (var keyVal : config.getResourcesSpaces().entrySet()) {
@@ -159,11 +159,11 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
 
         var response = connection.receive();
         switch (response) {
-            case NetCommands.RegistrationResponseSuccess -> {
+            case REGISTRATION_RESPONSE_SUCCESS -> {
                 log("Master successfully registered me.", LogType.In);
                 internalCommunication.registrationConfirmation.pass(true);
             }
-            case NetCommands.RegistrationResponseDeny ->
+            case REGISTRATION_RESPONSE_DENY ->
                 log("Master denied registration.", LogType.In);
 
             default ->
@@ -192,7 +192,7 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
         var ignored = internalCommunication.terminationRequestInternalPass.getValue();
 
         log("Sending termination request to the master", LogType.Out);
-        connection.send(NetCommands.TerminationRequest);
+        connection.send(TERMINATION_REQUEST);
 
         log("Reading termination results.", LogType.In);
         var response = ConnectionUtils.receiveMultiline(connection);
