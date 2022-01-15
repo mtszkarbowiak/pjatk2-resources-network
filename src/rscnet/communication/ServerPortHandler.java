@@ -98,7 +98,7 @@ public class ServerPortHandler extends AbstractPortHandler {
 
         var str = new StringBuilder();
         if (config.isMasterHost()) {
-            str.append(HEAD_RESPONSE_ME_MASTER);
+            str.append(HEAD_RESPONSE_I_AM_MASTER);
             log("Responded it's me.", LogType.Out);
         } else {
             str.append(HEAD_RESPONSE_ABOUT_MASTER + " ")

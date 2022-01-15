@@ -124,7 +124,7 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
                 log("Next potential master acknowledged: " + masterSocketAddress, LogType.In);
             }
 
-            case HEAD_RESPONSE_ME_MASTER -> {
+            case HEAD_RESPONSE_I_AM_MASTER -> {
                 masterSocketAddress = connection.getRemoteSocketAddress();
 
                 isMasterTrue = true;
