@@ -6,6 +6,8 @@ import rscnet.logging.Logger;
 
 import java.io.*;
 
+import static rscnet.Constants.Communication.*;
+
 public abstract class AbstractPortHandler extends Logger implements Runnable, TerminationListener {
     private boolean keepAlive = true;
 
@@ -15,7 +17,7 @@ public abstract class AbstractPortHandler extends Logger implements Runnable, Te
 
     @Override
     public void run() {
-        log("Starting loop. Init interval: " + getLoopInterval() + " ms", LogType.Config);
+        log("Starting loop.", LogType.Config);
 
         while (keepAlive){
             try{
@@ -24,14 +26,12 @@ public abstract class AbstractPortHandler extends Logger implements Runnable, Te
 
                 useConnection(connection);
                 connection.close();
-
-                sleep(getLoopInterval());
             }
             catch (IOException exception){
                 log("Error stopped update:", LogType.Problem);
                 exception.printStackTrace();
 
-                sleep(getReconnectionInterval());
+                sleep(RECONNECTION_INTERVAL);
             }
         }
 
@@ -44,14 +44,6 @@ public abstract class AbstractPortHandler extends Logger implements Runnable, Te
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
-
-    protected int getLoopInterval(){
-        return 50;
-    }
-
-    protected int getReconnectionInterval(){
-        return 2500;
     }
 
     @Override

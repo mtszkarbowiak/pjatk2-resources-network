@@ -6,12 +6,11 @@ import java.io.IOException;
 import java.net.*;
 import java.util.ArrayList;
 
+import static rscnet.Constants.App.*;
+import static rscnet.Constants.Async.*;
+
 public class NetworkNode
 {
-    public static final boolean USE_UNRELIABLE_CONNECTION = true;
-    public static final int COMPILATION_NO = 13;
-    public static final int MAX_APP_LIFETIME = 10000;
-
     private static boolean keepAlive = true;
     private static void terminateApp(){ keepAlive = false; }
 
@@ -82,11 +81,10 @@ public class NetworkNode
 
         // Keep Application Alive
 
-        final int mainStep = 50;
-        for (int t = 0; t < MAX_APP_LIFETIME && keepAlive; t+=mainStep) {
+        for (int t = 0; t < MAX_APP_LIFETIME && keepAlive; t+= THREAD_ASYNC_SLEEP_STEP) {
             try{
                 //noinspection BusyWait
-                Thread.sleep(mainStep);
+                Thread.sleep(THREAD_ASYNC_SLEEP_STEP);
             }catch (InterruptedException ignored){}
         }
 

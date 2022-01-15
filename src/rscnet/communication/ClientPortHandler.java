@@ -3,9 +3,13 @@ package rscnet.communication;
 import rscnet.data.AppConfig;
 import rscnet.InternalCommunication;
 import rscnet.logging.*;
+import rscnet.utils.ThreadBlocker;
+import rscnet.utils.ThreadBlocking;
 
 import java.io.*;
 import java.net.*;
+
+import static rscnet.Constants.Async.*;
 
 public class ClientPortHandler extends AbstractPortHandler
 {
@@ -173,26 +177,16 @@ public class ClientPortHandler extends AbstractPortHandler
 
 
     private void sleepUntilWork() {
-        int interval = 100;
-        final int intervalIncrement = 200;
-        final int logDisplayNo = 5;
-        int totalSleep = 0;
-        int logIndex = 1;
+        var blocker = new ThreadBlocker() {
+            @Override
+            public boolean keepBlocking() {
+                return internalCommunication.registrationConfirmation.getValue() &&
+                        internalCommunication.allocationRequestInternalPass.hasValue() == false &&
+                        getKeepAlive();
+            }
+        };
 
-        while ( internalCommunication.registrationConfirmation.getValue() &&
-                internalCommunication.allocationRequestInternalPass.hasValue() == false &&
-                getKeepAlive())
-        {
-            var currentSleepTime = interval;
-
-            sleep(currentSleepTime);
-
-            totalSleep += currentSleepTime;
-            interval += intervalIncrement;
-
-            if(logIndex++ % logDisplayNo == 0)
-                log("Waiting idle for " + (totalSleep / 1000) + " sec.", LogType.Info);
-        }
+        ThreadBlocking.wait(blocker, this);
     }
 
     @Override
