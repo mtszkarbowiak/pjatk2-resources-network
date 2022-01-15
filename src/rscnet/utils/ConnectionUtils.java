@@ -13,4 +13,9 @@ public class ConnectionUtils {
         }
         return totalResponse.toString();
     }
+
+    public static String translateResponse(String originalResponse)
+    {
+        return originalResponse.replace(NetCommands.NewLineReplacer,"\n");
+    }
 }

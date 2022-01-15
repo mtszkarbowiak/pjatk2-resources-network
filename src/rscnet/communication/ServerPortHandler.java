@@ -4,6 +4,7 @@ import rscnet.*;
 import rscnet.data.*;
 import rscnet.logging.*;
 import rscnet.logic.*;
+import rscnet.utils.ConnectionUtils;
 import rscnet.utils.ThreadBlocking;
 
 import java.io.*;
@@ -152,19 +153,14 @@ public class ServerPortHandler extends AbstractPortHandler {
 
             internalCommunication.allocationRequestInternalPass.pass(allocationsRequest);
 
-            int waitCycles = 0;
-            final int interval = 100;
-            while (internalCommunication.allocationResponseInternalPass.hasValue() == false){
-                sleep(interval);
-                if((waitCycles++) % (1000 / interval) == 0) log("Waiting...", LogType.Info);
-            }
+            ThreadBlocking.wait(() -> !internalCommunication.allocationResponseInternalPass.hasValue(), this);
 
-            String response = internalCommunication.allocationResponseInternalPass.getValue();
-            String responseFormat = response.replace(NetCommands.NewLineReplacer,"\n");
+            var response = ConnectionUtils.translateResponse(
+                    internalCommunication.allocationResponseInternalPass.getValue());
 
-            connection.send(responseFormat);
+            connection.send(response);
 
-            log("Passing results: \n" + responseFormat, LogType.Out);
+            log("Passing results: \n" + response, LogType.Out);
         }
     }
 
@@ -183,9 +179,12 @@ public class ServerPortHandler extends AbstractPortHandler {
 
             ThreadBlocking.wait(() -> internalCommunication.terminationResponseInternalPass.hasValue() == false, this);
 
-            var response = internalCommunication.terminationResponseInternalPass.getValue();
+            var response = ConnectionUtils.translateResponse(
+                    internalCommunication.terminationResponseInternalPass.getValue());
 
             connection.send(response);
+
+            log("Passing results: \n" + response, LogType.Out);
         }
     }
 
