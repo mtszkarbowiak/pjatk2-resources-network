@@ -3,6 +3,15 @@
 Przy opisywaniu poszczególnych elementów programu dodano adnotacje, jakie nazwy mają te elementy w kodzie (`name in
 code`).
 
+# Instrukcje
+
+Uruchomienie skryptu `_compile.bat` wykona komipację kodu znajdującego się w `src` oraz tekstową kopię tego dokumentu.
+Po komiplacji program jest gotowy do uruchomienia.
+
+Uruchomienie skryptu `_uncompile.bat` usunie wszystkie pliki wytworzone w poprzednim procesie.
+
+> Do kompilacji jest używany domyślny kompilator `javac`.
+
 # Implementacja
 
 ## Organizacja Sieci
