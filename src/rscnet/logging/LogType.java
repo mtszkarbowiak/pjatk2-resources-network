@@ -7,7 +7,7 @@ public enum LogType {
     Out("* ->"),
     Problem("/!\\");
 
-    String symbol;
+    final String symbol;
 
     public String getSymbol() {
         return symbol;

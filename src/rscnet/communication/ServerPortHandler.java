@@ -12,6 +12,7 @@ import java.util.*;
 
 import static rscnet.Constants.NetCommands.*;
 
+@SuppressWarnings("PointlessBooleanExpression")
 public class ServerPortHandler extends AbstractPortHandler {
     private final AppConfig config;
     private final InternalCommunication internalCommunication;
@@ -34,9 +35,9 @@ public class ServerPortHandler extends AbstractPortHandler {
 
         if(config.isMasterHost()){
             try {
-                log("Registrating the Master into slave registry.", LogType.Info);
+                log("Registering the Master into slave registry.", LogType.Info);
 
-                var hostMetadata = new HostMetadata(
+                HostMetadata hostMetadata = new HostMetadata(
                     new InetSocketAddress(InetAddress.getByName("localhost"), config.getHostingPort()),
                     config.getIdentifier(),
                     config.getResourcesSpaces()
@@ -53,13 +54,13 @@ public class ServerPortHandler extends AbstractPortHandler {
     protected Connection openConnection() throws IOException {
         int timeout = 50;
 
-        var hostingPort = config.getHostingPort();
+        int hostingPort = config.getHostingPort();
         serverSocket = new ServerSocket(hostingPort);
         serverSocket.setSoTimeout(timeout);
 
         while (getKeepAlive() == true){
             try{
-                var socket = serverSocket.accept();
+                Socket socket = serverSocket.accept();
                 return new ReliableConnection(socket);
             }catch (SocketTimeoutException ignored){}
 
@@ -68,7 +69,7 @@ public class ServerPortHandler extends AbstractPortHandler {
                 else return null;
             }
 
-            var result2 = unreliableConnectionFactory.
+            Connection result2 = unreliableConnectionFactory.
                     acceptUnreliableConnectionOrNull(timeout);
             if(result2 != null) return result2;
         }
@@ -78,15 +79,15 @@ public class ServerPortHandler extends AbstractPortHandler {
 
     @Override
     protected void useConnection(Connection connection) throws IOException {
-        final var request = connection.receive();
-        final var args = request.split(" ");
+        final String request = connection.receive();
+        final String[] args = request.split(" ");
 
         switch (args[0]) {
-            case HEAD_REQUEST -> handleHeadRequest(connection, request);
-            case REGISTRATION_REQUEST -> handleRegistrationRequest(connection, request, args);
-            case TERMINATION_REQUEST -> handleTerminationRequest(connection);
-            case COLLAPSE_REQUEST ->  handleCollapseRequest();
-            default -> handleAllocationRequest(connection, request);
+            case HEAD_REQUEST: { handleHeadRequest(connection, request); }  break;
+            case REGISTRATION_REQUEST: { handleRegistrationRequest(connection, request, args); }  break;
+            case TERMINATION_REQUEST: { handleTerminationRequest(connection); }  break;
+            case COLLAPSE_REQUEST: {  handleCollapseRequest(); }  break;
+            default: { handleAllocationRequest(connection, request); }  break;
         }
 
         serverSocket.close();
@@ -96,7 +97,7 @@ public class ServerPortHandler extends AbstractPortHandler {
     private void handleHeadRequest(Connection connection, String request) throws IOException {
         log("Requested sign to master. (" + request + ")", LogType.In);
 
-        var str = new StringBuilder();
+        StringBuilder str = new StringBuilder();
         if (config.isMasterHost()) {
             str.append(HEAD_RESPONSE_I_AM_MASTER);
             log("Responded it's me.", LogType.Out);
@@ -114,20 +115,20 @@ public class ServerPortHandler extends AbstractPortHandler {
 
     private void handleRegistrationRequest(Connection connection, String request, String[] args) throws IOException {
         log("Requested registration. (" + request + ")", LogType.In);
-        var identifier = Integer.parseInt(args[1]);
-        var port = Integer.parseInt(args[2]);
-        var slaveSocketAddress = new InetSocketAddress(
+        int identifier = Integer.parseInt(args[1]);
+        int port = Integer.parseInt(args[2]);
+        InetSocketAddress slaveSocketAddress = new InetSocketAddress(
                 connection.getRemoteSocketAddress().getAddress(), port);
 
-        var space = new HashMap<String,Integer>(args.length - 2);
+        HashMap<String,Integer> space = new HashMap<>(args.length - 2);
         for (int i = 3; i < args.length; i++) {
-            var keyVal = args[i].split(":");
-            var key = keyVal[0];
-            var val = Integer.parseInt(keyVal[1]);
+            String[] keyVal = args[i].split(":");
+            String key = keyVal[0];
+            int val = Integer.parseInt(keyVal[1]);
             space.put(key, val);
         }
 
-        var pass = networkStatus.tryRegister(new HostMetadata(slaveSocketAddress, identifier, space));
+        boolean pass = networkStatus.tryRegister(new HostMetadata(slaveSocketAddress, identifier, space));
 
         if(pass){
             connection.send(REGISTRATION_RESPONSE_SUCCESS);
@@ -142,13 +143,13 @@ public class ServerPortHandler extends AbstractPortHandler {
 
 
     private void handleAllocationRequest(Connection connection, String request) throws IOException {
-        var allocationsRequest = new AllocationRequest(request);
+        AllocationRequest allocationsRequest = new AllocationRequest(request);
 
         if(config.isMasterHost())
         {
             log("Incoming (interpreted allocations) request: " + request, LogType.In);
 
-            var allocationBuilder = AllocationResults.tryAllocate(allocationsRequest, networkStatus);
+            AllocationResults allocationBuilder = AllocationResults.tryAllocate(allocationsRequest, networkStatus);
 
             connection.send(allocationBuilder.toString());
 
@@ -160,7 +161,7 @@ public class ServerPortHandler extends AbstractPortHandler {
 
             ThreadBlocking.wait(() -> !internalCommunication.allocationResponseInternalPass.hasValue(), this);
 
-            var response = ConnectionUtils.translateResponse(
+            String response = ConnectionUtils.translateResponse(
                     internalCommunication.allocationResponseInternalPass.getValue());
 
             connection.send(response);
@@ -184,7 +185,7 @@ public class ServerPortHandler extends AbstractPortHandler {
 
             ThreadBlocking.wait(() -> internalCommunication.terminationResponseInternalPass.hasValue() == false, this);
 
-            var response = ConnectionUtils.translateResponse(
+            String response = ConnectionUtils.translateResponse(
                     internalCommunication.terminationResponseInternalPass.getValue());
 
             connection.send(response);
@@ -201,10 +202,10 @@ public class ServerPortHandler extends AbstractPortHandler {
 
 
     private String getAllocInfo(){
-        var sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
 
-        for (var host : networkStatus.getHosts()) {
-            for (var reg : host.getFullAllocInfo()) {
+        for (HostStatus host : networkStatus.getHosts()) {
+            for (FullAllocRecord reg : host.getFullAllocInfo()) {
 
                 sb.append(reg.resource);
                 sb.append('.');

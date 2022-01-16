@@ -13,7 +13,7 @@ public class ThreadBlocking {
         int logIndex = 1;
 
         while (threadBlocker.keepBlocking()){
-            var currentSleepTime = interval;
+            int currentSleepTime = interval;
 
             try {
                 Thread.sleep(currentSleepTime);

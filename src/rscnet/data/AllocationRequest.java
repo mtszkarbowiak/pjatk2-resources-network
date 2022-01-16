@@ -7,20 +7,14 @@ public class AllocationRequest {
     private final Map<String,Integer> resources;
     private final String text;
 
-    public AllocationRequest(int clientIdentifier, Map<String, Integer> resources) {
-        this.clientIdentifier = clientIdentifier;
-        this.resources = resources;
-        this.text = getText();
-    }
-
     public AllocationRequest(String format){
-        var args = format.split(" ");
+        String[] args = format.split(" ");
 
         this.resources = new HashMap<>();
         for (int i = 1; i < args.length; i++) {
-            var subArgs = args[i].split(":");
-            var key = subArgs[0];
-            var value = Integer.parseInt(subArgs[1]);
+            String[] subArgs = args[i].split(":");
+            String key = subArgs[0];
+            int value = Integer.parseInt(subArgs[1]);
 
             resources.put(key,value);
         }
@@ -30,10 +24,10 @@ public class AllocationRequest {
     }
 
     private String getText(){
-        var stringBuilder = new StringBuilder();
+        StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(clientIdentifier);
 
-        for (var entry : resources.entrySet()) {
+        for (Map.Entry<String, Integer> entry : resources.entrySet()) {
             stringBuilder.append(' ');
             stringBuilder.append(entry.getKey());
             stringBuilder.append(':');

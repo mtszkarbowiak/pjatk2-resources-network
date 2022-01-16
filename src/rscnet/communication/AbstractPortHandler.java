@@ -1,8 +1,7 @@
 package rscnet.communication;
 
 import rscnet.TerminationListener;
-import rscnet.logging.LogType;
-import rscnet.logging.Logger;
+import rscnet.logging.*;
 
 import java.io.*;
 
@@ -22,7 +21,7 @@ public abstract class AbstractPortHandler extends Logger implements Runnable, Te
         while (keepAlive){
             log("Update: " + getClass().getName(), LogType.Info);
             try{
-                final var connection = openConnection();
+                final Connection connection = openConnection();
                 if(connection != null)
                 {
                     useConnection(connection);
@@ -37,17 +36,17 @@ public abstract class AbstractPortHandler extends Logger implements Runnable, Te
                 log("Error stopped an update:", LogType.Problem);
                 exception.printStackTrace();
 
-                sleep(RECONNECTION_INTERVAL);
+                sleep();
             }
         }
 
-        var type = getClass().getName();
+        String type = getClass().getName();
         log("Loop ended: " + type, LogType.Config);
     }
 
-    protected void sleep(int ms){
+    protected void sleep(){
         try {
-            Thread.sleep(ms);
+            Thread.sleep(RECONNECTION_INTERVAL);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

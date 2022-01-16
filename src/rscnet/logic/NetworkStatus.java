@@ -10,13 +10,13 @@ public class NetworkStatus {
     }
 
     public boolean tryRegister(HostMetadata newHostMetadata){
-        for (var host : hosts) {
-            var metaData = host.getMetadata();
+        for (HostStatus host : hosts) {
+            HostMetadata metaData = host.getMetadata();
             if(metaData.getIdentifier() == newHostMetadata.getIdentifier())
                 return false;
         }
 
-        var newStatus = new HostStatus(newHostMetadata);
+        HostStatus newStatus = new HostStatus(newHostMetadata);
         hosts.add(newStatus);
 
         return true;
@@ -27,9 +27,9 @@ public class NetworkStatus {
     }
 
     public int getFreeResourceSpace(String rscName){
-        var result = 0;
+        int result = 0;
 
-        for (var host : hosts) {
+        for (HostStatus host : hosts) {
             result += host.getFreeResourceSpace(rscName);
         }
 

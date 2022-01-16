@@ -15,6 +15,7 @@ import java.net.Socket;
 import java.util.LinkedList;
 import java.util.Queue;
 
+@SuppressWarnings("PointlessBooleanExpression")
 public class ClientMasterPortHandler extends AbstractPortHandler
 {
     private final AppConfig config;
@@ -46,7 +47,7 @@ public class ClientMasterPortHandler extends AbstractPortHandler
 
         if(collapseQueue == null){
             collapseQueue = new LinkedList<>();
-            for (var host : networkStatus.getHosts()) {
+            for (HostStatus host : networkStatus.getHosts()) {
                 if(host.getMetadata().getIdentifier() == config.getIdentifier()) continue;
 
                 collapseQueue.add(host);
@@ -57,16 +58,16 @@ public class ClientMasterPortHandler extends AbstractPortHandler
         {
             collapsingHost = collapseQueue.remove();
 
-            var address = collapsingHost.getMetadata().getSocketAddress();
+            InetSocketAddress address = collapsingHost.getMetadata().getSocketAddress();
 
             log("Collapsing: " + collapsingHost.getMetadata().getIdentifier() + " at " + address, LogType.Info);
 
             if(unreliableConnectionFactory == null) {
-                var socket = new Socket();
+                Socket socket = new Socket();
                 socket.connect(address);
                 return new ReliableConnection(socket);
             }else{
-                var unreliableMasterSocketAddress = new InetSocketAddress(
+                InetSocketAddress unreliableMasterSocketAddress = new InetSocketAddress(
                         address.getAddress(), address.getPort() + 100);
                 return unreliableConnectionFactory.openUnreliableConnection(unreliableMasterSocketAddress);
             }

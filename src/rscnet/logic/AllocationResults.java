@@ -2,6 +2,7 @@ package rscnet.logic;
 
 import rscnet.data.AllocationRequest;
 
+import java.net.InetSocketAddress;
 import java.util.*;
 
 public class AllocationResults {
@@ -12,9 +13,9 @@ public class AllocationResults {
     public static AllocationResults tryAllocate(AllocationRequest request, NetworkStatus networkStatus){
 
         boolean requestPossible = true;
-        for (var name : request.getDemandedResources()) {
-            var quantity = request.getDemandedQuantity(name);
-            var freeSpace = networkStatus.getFreeResourceSpace(name);
+        for (String name : request.getDemandedResources()) {
+            int quantity = request.getDemandedQuantity(name);
+            int freeSpace = networkStatus.getFreeResourceSpace(name);
 
             System.out.println("Req: " + name + "Q: " + quantity + " S: " + freeSpace);
 
@@ -26,12 +27,12 @@ public class AllocationResults {
 
         if(requestPossible)
         {
-            var logger = new StringBuilder();
-            var pending = new HashMap<String, Integer>();
-            var result = new AllocationResults(request, pending, logger);
+            StringBuilder logger = new StringBuilder();
+            HashMap<String, Integer> pending = new HashMap<>();
+            AllocationResults result = new AllocationResults(request, pending, logger);
 
-            for (var resource : request.getDemandedResources()) {
-                var quantity = request.getDemandedQuantity(resource);
+            for (String resource : request.getDemandedResources()) {
+                int quantity = request.getDemandedQuantity(resource);
                 pending.put(resource, quantity);
             }
 
@@ -53,26 +54,26 @@ public class AllocationResults {
     }
 
     private void allocate(NetworkStatus network){
-        for (var host : network.getHosts()) {
+        for (HostStatus host : network.getHosts()) {
             allocate(host);
         }
     }
 
     private void allocate(HostStatus host){
-        for (var rscName : pending.keySet()) {
-            var amount = pending.get(rscName);
-            var alloced = host.allocate(rscName, request.getClientIdentifier(), amount);
+        for (String rscName : pending.keySet()) {
+            Integer amount = pending.get(rscName);
+            int allocated = host.allocate(rscName, request.getClientIdentifier(), amount);
 
-            pending.replace(rscName, amount - alloced);
+            pending.replace(rscName, amount - allocated);
 
-            if(alloced == 0) continue;
+            if(allocated == 0) continue;
 
             logger.append(rscName);
             logger.append(':');
-            logger.append(alloced);
+            logger.append(allocated);
             logger.append(':');
 
-            var address = host.getMetadata().getSocketAddress();
+            InetSocketAddress address = host.getMetadata().getSocketAddress();
             logger.append(address.getAddress().getHostAddress());
             logger.append(':');
             logger.append(address.getPort());

@@ -1,5 +1,6 @@
 package rscnet.communication;
 
+import rscnet.data.AllocationRequest;
 import rscnet.data.AppConfig;
 import rscnet.InternalCommunication;
 import rscnet.logging.*;
@@ -7,10 +8,12 @@ import rscnet.utils.*;
 
 import java.io.*;
 import java.net.*;
+import java.util.Map;
 
 import static rscnet.Constants.NetCommands.*;
 
-public class ClientSubhostPortHandler extends AbstractPortHandler
+@SuppressWarnings("PointlessBooleanExpression")
+public class ClientSubHostPortHandler extends AbstractPortHandler
 {
     private final AppConfig config;
     private final InternalCommunication internalCommunication;
@@ -19,7 +22,7 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
     private InetSocketAddress masterSocketAddress;
     private boolean isMasterTrue;
 
-    public ClientSubhostPortHandler(
+    public ClientSubHostPortHandler(
             AppConfig config,
             InternalCommunication internalCommunication,
             UnreliableConnectionFactory unreliableConnectionFactory) {
@@ -34,15 +37,12 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
 
     @Override
     protected Connection openConnection() throws IOException {
-        var blocker = new ThreadBlocker() {
-            @Override
-            public boolean keepBlocking() {
-                return internalCommunication.registrationConfirmation.getValue() &&
-                       internalCommunication.allocationRequestInternalPass.hasValue() == false &&
-                       internalCommunication.terminationRequestInternalPass.hasValue() == false &&
-                       getKeepAlive();
-            }
-        };
+        @SuppressWarnings("PointlessBooleanExpression")
+        ThreadBlocker blocker = () ->
+                internalCommunication.registrationConfirmation.getValue() &&
+                internalCommunication.allocationRequestInternalPass.hasValue() == false &&
+                internalCommunication.terminationRequestInternalPass.hasValue() == false &&
+                getKeepAlive();
 
         ThreadBlocking.wait(blocker, this);
 
@@ -55,7 +55,7 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
             internalCommunication.registrationConfirmation.getValue() &&
             unreliableConnectionFactory != null){
 
-            var unreliableMasterSocketAddress = new InetSocketAddress(
+            InetSocketAddress unreliableMasterSocketAddress = new InetSocketAddress(
                     masterSocketAddress.getAddress(),
                     masterSocketAddress.getPort() + 100);
 
@@ -63,8 +63,8 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
                     unreliableMasterSocketAddress);
         }
 
-        var result = new Socket();
-        var address =
+        Socket result = new Socket();
+        InetSocketAddress address =
                 masterSocketAddress != null ? masterSocketAddress : friendSocketAddress;
 
         result.connect(address);
@@ -111,31 +111,31 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
         log("Asking for the master...", LogType.Out);
         connection.send(HEAD_REQUEST);
 
-        var responseAboutMaster = connection.receive();
+        String responseAboutMaster = connection.receive();
 
-        var args = responseAboutMaster.split(" ");
+        String[] args = responseAboutMaster.split(" ");
         switch (args[0]) {
-            case HEAD_RESPONSE_ABOUT_MASTER -> {
-                var masterAddress = InetAddress.getByName(args[1]);
-                var masterPort = Integer.parseInt(args[2]);
+            case HEAD_RESPONSE_ABOUT_MASTER: {
+                InetAddress masterAddress = InetAddress.getByName(args[1]);
+                int masterPort = Integer.parseInt(args[2]);
                 masterSocketAddress = new InetSocketAddress(masterAddress, masterPort);
 
                 isMasterTrue = false;
                 log("Next potential master acknowledged: " + masterSocketAddress, LogType.In);
-            }
+            }  break;
 
-            case HEAD_RESPONSE_I_AM_MASTER -> {
+            case HEAD_RESPONSE_I_AM_MASTER: {
                 masterSocketAddress = connection.getRemoteSocketAddress();
 
                 isMasterTrue = true;
                 log("Friend is the master! Master validated.", LogType.In);
-            }
+            }  break;
 
-            case HEAD_RESPONSE_FAIL -> {
+            case HEAD_RESPONSE_FAIL: {
                 masterSocketAddress = null;
                 isMasterTrue = false;
                 log("Friend does not know any master and has no friends. (Error)", LogType.In);
-            }
+            }  break;
         }
     }
 
@@ -144,7 +144,7 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
     {
         log("Requesting registration.", LogType.Out);
 
-        var msg = new StringBuilder();
+        StringBuilder msg = new StringBuilder();
 
         msg.append(REGISTRATION_REQUEST);
         msg.append(' ');
@@ -152,7 +152,7 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
         msg.append(' ');
         msg.append(config.getHostingPort());
 
-        for (var keyVal : config.getResourcesSpaces().entrySet()) {
+        for (Map.Entry<String,Integer> keyVal : config.getResourcesSpaces().entrySet()) {
             msg .append(" ")
                 .append(keyVal.getKey())
                 .append(":")
@@ -160,30 +160,33 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
         }
         connection.send(msg.toString());
 
-        var response = connection.receive();
+        String response = connection.receive();
         switch (response) {
-            case REGISTRATION_RESPONSE_SUCCESS -> {
+            case REGISTRATION_RESPONSE_SUCCESS: {
                 log("Master successfully registered me.", LogType.In);
                 internalCommunication.registrationConfirmation.pass(true);
-            }
-            case REGISTRATION_RESPONSE_DENY ->
-                log("Master denied registration.", LogType.In);
+            }  break;
 
-            default ->
+            case REGISTRATION_RESPONSE_DENY: {
+                log("Master denied registration.", LogType.In);
+            }  break;
+
+            default: {
                 log("Invalid response (" + response + ")", LogType.Problem);
+            }  break;
         }
     }
 
 
     private void requestAllocation(Connection connection) throws IOException
     {
-        var request = internalCommunication.allocationRequestInternalPass.getValue();
+        AllocationRequest request = internalCommunication.allocationRequestInternalPass.getValue();
 
         log("Sending allocation request to the master", LogType.Out);
         connection.send(request.toString());
 
         log("Reading allocation results.", LogType.In);
-        var totalResponse = ConnectionUtils.receiveMultiline(connection);
+        String totalResponse = ConnectionUtils.receiveMultiline(connection);
 
         log("Passing results to the server.", LogType.Info);
         internalCommunication.allocationResponseInternalPass.pass(totalResponse);
@@ -192,13 +195,13 @@ public class ClientSubhostPortHandler extends AbstractPortHandler
 
     private void requestTermination(Connection connection) throws IOException
     {
-        var ignored = internalCommunication.terminationRequestInternalPass.getValue();
+        internalCommunication.terminationRequestInternalPass.getValue();
 
         log("Sending termination request to the master", LogType.Out);
         connection.send(TERMINATION_REQUEST);
 
         log("Reading termination results.", LogType.In);
-        var response = ConnectionUtils.receiveMultiline(connection);
+        String response = ConnectionUtils.receiveMultiline(connection);
 
         log("Passing results to the server.", LogType.Info);
         internalCommunication.terminationResponseInternalPass.pass(response);

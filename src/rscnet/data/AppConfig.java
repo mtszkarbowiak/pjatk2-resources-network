@@ -15,16 +15,16 @@ public class AppConfig {
     public AppConfig(String[] args) throws UnknownHostException
     {
         resourcesSpaces = new HashMap<>();
-        var expectation = ArgExpectation.Resource;
+        ArgExpectation expectation = ArgExpectation.Resource;
 
-        for (var arg : args) {
+        for (String arg : args) {
             if(expectation == ArgExpectation.Resource){
-                expectation =  switch(arg){
-                    case "-ident" -> ArgExpectation.Identifier;
-                    case "-tcpport" -> ArgExpectation.Port;
-                    case "-gateway" -> ArgExpectation.Gateway;
-                    default -> ArgExpectation.Resource;
-                };
+                 switch(arg){
+                     case "-ident": expectation = ArgExpectation.Identifier; break;
+                     case "-tcpport": expectation = ArgExpectation.Port; break;
+                     case "-gateway": expectation = ArgExpectation.Gateway; break;
+                     default: break;
+                }
 
                 if(expectation != ArgExpectation.Resource) {
                     continue;
@@ -32,39 +32,27 @@ public class AppConfig {
             }
 
             switch (expectation) {
-                case Identifier -> identifier = Integer.parseInt(arg);
-                case Port -> hostingPort = Integer.parseInt(arg);
-                case Gateway -> {
-                    var subArgs = arg.split(":");
-                    var address = InetAddress.getByName(subArgs[0]);
-                    var port = Integer.parseInt(subArgs[1]);
+                case Identifier: identifier = Integer.parseInt(arg); break;
+                case Port: hostingPort = Integer.parseInt(arg); break;
+                case Gateway: {
+                    String[] subArgs = arg.split(":");
+                    InetAddress address = InetAddress.getByName(subArgs[0]);
+                    int port = Integer.parseInt(subArgs[1]);
 
                     gatewayAddress = address;
                     gatewayPort = port;
-                }
-                case Resource -> {
-                    var subArgs = arg.split(":");
-                    var id = subArgs[0];
-                    var value = Integer.parseInt(subArgs[1]);
+                } break;
+                case Resource: {
+                    String[] subArgs = arg.split(":");
+                    String id = subArgs[0];
+                    int value = Integer.parseInt(subArgs[1]);
 
                     resourcesSpaces.put(id, value);
-                }
-                default -> throw new IllegalStateException("Unexpected value: " + expectation);
+                } break;
+                default: throw new IllegalStateException("Unexpected value: " + expectation);
             }
             expectation = ArgExpectation.Resource;
         }
-    }
-
-    public AppConfig(
-            int identifier,
-            int hostingPort,
-            InetAddress gatewayAddress,
-            Map<String, Integer> resourcesSpaces)
-    {
-        this.identifier = identifier;
-        this.hostingPort = hostingPort;
-        this.gatewayAddress = gatewayAddress;
-        this.resourcesSpaces = resourcesSpaces;
     }
 
     public int getIdentifier() {
@@ -93,7 +81,7 @@ public class AppConfig {
 
     @Override
     public String toString() {
-        var str = new StringBuilder();
+        StringBuilder str = new StringBuilder();
         str.append("AppConfig( ID=");
         str.append(identifier);
         str.append(" HostingPort=");
@@ -111,7 +99,7 @@ public class AppConfig {
         }
 
 
-        for (var entry : resourcesSpaces.entrySet()) {
+        for (Map.Entry<String, Integer> entry : resourcesSpaces.entrySet()) {
             str.append(' ');
             str.append(entry.getKey());
             str.append(":");

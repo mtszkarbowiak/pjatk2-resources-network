@@ -1,23 +1,20 @@
 package rscnet.logic;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class HostStatus {
     private final HostMetadata metadata;
-    private final Map<String, ResourceAllocsReg> resourceAllocsRegMap;
+    private final Map<String, ResourceAllocationsReg> resourceAllocationsRegMap;
 
     public HostStatus(HostMetadata metadata) {
         this.metadata = metadata;
-        this.resourceAllocsRegMap = new HashMap<>();
+        this.resourceAllocationsRegMap = new HashMap<>();
 
-        for (var rscName : metadata.getStoredResourcesNames()){
-            var space = metadata.getResourceSpace(rscName);
-            var resourceAllocRegistry = new ResourceAllocsReg(space);
+        for (String rscName : metadata.getStoredResourcesNames()){
+            int space = metadata.getResourceSpace(rscName);
+            ResourceAllocationsReg resourceAllocRegistry = new ResourceAllocationsReg(space);
 
-            resourceAllocsRegMap.put(rscName, resourceAllocRegistry);
+            resourceAllocationsRegMap.put(rscName, resourceAllocRegistry);
         }
     }
 
@@ -26,15 +23,15 @@ public class HostStatus {
     }
 
     public int allocate(String rscName, int identifier, int amount){
-        var allocsReg = resourceAllocsRegMap.getOrDefault(rscName, null);
+        ResourceAllocationsReg allocationsReg = resourceAllocationsRegMap.getOrDefault(rscName, null);
 
-        if(allocsReg == null) return 0;
+        if(allocationsReg == null) return 0;
 
-        return allocsReg.allocate(identifier, amount);
+        return allocationsReg.allocate(identifier, amount);
     }
 
     public int getFreeResourceSpace(String rscName) {
-        var reg = resourceAllocsRegMap.getOrDefault(rscName, null);
+        ResourceAllocationsReg reg = resourceAllocationsRegMap.getOrDefault(rscName, null);
 
         if(reg == null) return 0;
 
@@ -42,10 +39,10 @@ public class HostStatus {
     }
 
     public List<FullAllocRecord> getFullAllocInfo(){
-        var result = new ArrayList<FullAllocRecord>();
-        for (var rscAllocReg : resourceAllocsRegMap.entrySet()) {
-            var key = rscAllocReg.getKey();
-            for (var recordKeyVal : rscAllocReg.getValue().getRecordsReadOnly().entrySet()) {
+        ArrayList<FullAllocRecord> result = new ArrayList<>();
+        for (Map.Entry<String, ResourceAllocationsReg> rscAllocReg : resourceAllocationsRegMap.entrySet()) {
+            String key = rscAllocReg.getKey();
+            for (Map.Entry<Integer, Integer> recordKeyVal : rscAllocReg.getValue().getRecordsReadOnly().entrySet()) {
                 result.add(new FullAllocRecord(key, recordKeyVal.getKey(), recordKeyVal.getValue()));
             }
         }

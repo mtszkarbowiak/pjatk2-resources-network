@@ -191,6 +191,6 @@ działania.
 
 # Informacje dodatkowe
 
-Przedmiot: SKJ 2021/22 sem.1 (Projekt spełnia wszystkie założenia, włącznie z dodatkowymi.)
-Autor: Mateusz Karbowiak - Edytory: InteliJ, Git
+Przedmiot: SKJ 2021/22 sem.1 (Projekt spełnia wszystkie założenia, włącznie z dodatkowymi)
+Autor: Mateusz Karbowiak — Edytory: InteliJ, Git
 

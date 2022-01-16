@@ -1,11 +1,11 @@
 import rscnet.*;
 import rscnet.communication.*;
-import rscnet.data.AppConfig;
-import rscnet.logic.NetworkStatus;
+import rscnet.data.*;
+import rscnet.logic.*;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
+import java.util.*;
 
 import static rscnet.Constants.App.*;
 import static rscnet.Constants.Async.*;
@@ -34,13 +34,11 @@ public class NetworkNode
 
         // Configuration
 
-        var config = new AppConfig(args);
-        var masterHostMode = config.isMasterHost();
+        AppConfig config = new AppConfig(args);
+        boolean masterHostMode = config.isMasterHost();
 
-        var terminationListeners = new ArrayList<TerminationListener>();
-        var appTerminationRequestHandler = new TerminationListener(){
-            @Override public void terminate() { terminateApp();  }
-        };
+        ArrayList<TerminationListener> terminationListeners = new ArrayList<>();
+        TerminationListener appTerminationRequestHandler = NetworkNode::terminateApp;
 
         System.out.println(config);
         System.out.println(masterHostMode ? "Running as MASTER" : "Running as SLAVE");
@@ -66,14 +64,14 @@ public class NetworkNode
         }
 
         if (!masterHostMode) {
-            var clientPortHandler = new ClientSubhostPortHandler(
+            ClientSubHostPortHandler clientPortHandler = new ClientSubHostPortHandler(
                     config, internalCommunication, unreliableConnectionFactory);
             clientThread = new Thread(clientPortHandler);
             terminationListeners.add(clientPortHandler);
         }else{
             networkStatus = new NetworkStatus();
 
-            var clientPortHandler = new ClientMasterPortHandler(
+            ClientMasterPortHandler clientPortHandler = new ClientMasterPortHandler(
                     config, internalCommunication, unreliableConnectionFactory,
                     networkStatus, appTerminationRequestHandler);
             clientThread = new Thread(clientPortHandler);
@@ -82,7 +80,7 @@ public class NetworkNode
         clientThread.setName("Client");
         clientThread.start();
 
-        var serverPortHandler = new ServerPortHandler(
+        ServerPortHandler serverPortHandler = new ServerPortHandler(
                 config, internalCommunication,
                 unreliableConnectionFactory, appTerminationRequestHandler,
                 networkStatus);
@@ -105,7 +103,7 @@ public class NetworkNode
 
         System.out.println("---* TERMINATING *---");
 
-        for (var terminable : terminationListeners) {
+        for (TerminationListener terminable : terminationListeners) {
             System.out.println("Terminating " + terminable.getClass().getName());
             terminable.terminate();
         }

@@ -2,19 +2,19 @@ package rscnet.logic;
 
 import java.util.*;
 
-public class ResourceAllocsReg {
+public class ResourceAllocationsReg {
     private final int totalSpace;
     private final Map<Integer, Integer> records;
 
-    public ResourceAllocsReg(int totalSpace) {
+    public ResourceAllocationsReg(int totalSpace) {
         this.totalSpace = totalSpace;
         this.records = new HashMap<>();
     }
 
     public int getTakenSpace(){
-        var result = 0;
+        int result = 0;
 
-        for (var value : records.values()) {
+        for (Integer value : records.values()) {
             result += value;
         }
 
@@ -26,12 +26,12 @@ public class ResourceAllocsReg {
     }
 
     public int allocate(int identifier, int amount){
-        var union = Math.min(getFreeSpace(), amount);
+        int union = Math.min(getFreeSpace(), amount);
 
         if(union == 0) return 0;
 
-        var previousIdAllocs = records.getOrDefault(identifier, 0);
-        records.put(identifier, previousIdAllocs + union);
+        Integer previousIdAllocations = records.getOrDefault(identifier, 0);
+        records.put(identifier, previousIdAllocations + union);
 
         return union;
     }

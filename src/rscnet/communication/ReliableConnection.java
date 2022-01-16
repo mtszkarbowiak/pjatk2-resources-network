@@ -1,7 +1,5 @@
 package rscnet.communication;
 
-import com.sun.source.tree.BreakTree;
-
 import java.io.*;
 import java.net.*;
 
