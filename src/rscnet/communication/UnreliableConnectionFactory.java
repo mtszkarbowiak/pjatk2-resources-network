@@ -226,13 +226,13 @@ class UnreliableConnection implements Connection {
             case Message: {
                 incomingValuePackets.add(wrappedPacket);
                 log("Value packet arrived.");
-                server.passOutgoingPacket(wrappedPacket.createConfirmation()); // ONLY 1 CONFIRMATION
+                server.passOutgoingPacket(wrappedPacket.createConfirmation());
             } break;
 
             case Acknowledgement: {
                 if(wrappedPacket.getMessageId() == lastMessageId) {
                     log("Packet arrival confirmed.");
-                    lastConfirmedMessageId = lastMessageId;
+                    lastConfirmedMessageId = Math.max(lastMessageId, lastConfirmedMessageId);
                 }else{
                     log("Obsolete confirmation arrived. Ignoring.");
                 }
@@ -297,11 +297,7 @@ class UnreliablePacketWrapper{
             PROTOCOL_SEPARATOR +
             packetType.toString() + // 3
             PROTOCOL_SEPARATOR +
-            "EMPTY" + // 4
-            PROTOCOL_SEPARATOR +
-            "EMPTY" + // 5
-            PROTOCOL_SEPARATOR +
-            messageValue + // 6
+            messageValue + // 4
             PROTOCOL_SEPARATOR;
     }
 
@@ -312,7 +308,7 @@ class UnreliablePacketWrapper{
         int messageId = Integer.parseInt(elements[1]);
         int attemptId = Integer.parseInt(elements[2]);
         UnreliablePacketType type = UnreliablePacketType.valueOf(elements[3]);
-        String messageValue = elements[6];
+        String messageValue = elements[4];
 
         return new UnreliablePacketWrapper(connectionId, messageId, attemptId, type, messageValue);
     }
@@ -361,6 +357,7 @@ enum UnreliablePacketType{
     Message,
     Acknowledgement,
 }
+
 
 class UnreliableCommunicationUtils{
     public static void log(String msg){
