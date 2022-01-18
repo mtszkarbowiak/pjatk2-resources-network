@@ -10,6 +10,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+import static rscnet.Constants.App.NULL_PORT;
 import static rscnet.Constants.NetCommands.*;
 
 @SuppressWarnings("PointlessBooleanExpression")
@@ -38,7 +39,9 @@ public class ServerPortHandler extends AbstractPortHandler {
                 log("Registering the Master into slave registry.", LogType.Info);
 
                 HostMetadata hostMetadata = new HostMetadata(
-                    new InetSocketAddress(InetAddress.getByName("localhost"), config.getHostingPort()),
+                    new InetSocketAddress(InetAddress.getByName("localhost"), config.getHostingTcpPort()),
+                    config.getHostingUdpPort() == NULL_PORT ? null :
+                            new InetSocketAddress(InetAddress.getByName("localhost"), config.getHostingUdpPort()),
                     config.getIdentifier(),
                     config.getResourcesSpaces()
                 );
@@ -54,7 +57,7 @@ public class ServerPortHandler extends AbstractPortHandler {
     protected Connection openConnection() throws IOException {
         int timeout = 50;
 
-        int hostingPort = config.getHostingPort();
+        int hostingPort = config.getHostingTcpPort();
         serverSocket = new ServerSocket(hostingPort);
         serverSocket.setSoTimeout(timeout);
 
@@ -100,6 +103,8 @@ public class ServerPortHandler extends AbstractPortHandler {
         StringBuilder str = new StringBuilder();
         if (config.isMasterHost()) {
             str.append(HEAD_RESPONSE_I_AM_MASTER);
+            str.append(' ');
+            str.append(config.getHostingUdpPort());
             log("Responded it's me.", LogType.Out);
         } else {
             str.append(HEAD_RESPONSE_ABOUT_MASTER + " ")
@@ -116,19 +121,24 @@ public class ServerPortHandler extends AbstractPortHandler {
     private void handleRegistrationRequest(Connection connection, String request, String[] args) throws IOException {
         log("Requested registration. (" + request + ")", LogType.In);
         int identifier = Integer.parseInt(args[1]);
-        int port = Integer.parseInt(args[2]);
-        InetSocketAddress slaveSocketAddress = new InetSocketAddress(
-                connection.getRemoteSocketAddress().getAddress(), port);
+        int tcpPort = Integer.parseInt(args[2]);
+        int udpPort = Integer.parseInt(args[3]);
 
-        HashMap<String,Integer> space = new HashMap<>(args.length - 2);
-        for (int i = 3; i < args.length; i++) {
+        InetSocketAddress slaveTcpSocketAddress = new InetSocketAddress(
+                connection.getRemoteSocketAddress().getAddress(), tcpPort);
+        InetSocketAddress slaveUdpSocketAddress = udpPort == NULL_PORT ? null : new InetSocketAddress(
+                connection.getRemoteSocketAddress().getAddress(), udpPort);
+
+        HashMap<String,Integer> space = new HashMap<>(args.length - 3);
+        for (int i = 4; i < args.length; i++) {
             String[] keyVal = args[i].split(":");
             String key = keyVal[0];
             int val = Integer.parseInt(keyVal[1]);
             space.put(key, val);
         }
 
-        boolean pass = networkStatus.tryRegister(new HostMetadata(slaveSocketAddress, identifier, space));
+        boolean pass = networkStatus.tryRegister(new HostMetadata(
+            slaveTcpSocketAddress, slaveUdpSocketAddress, identifier, space));
 
         if(pass){
             connection.send(REGISTRATION_RESPONSE_SUCCESS);
@@ -211,9 +221,9 @@ public class ServerPortHandler extends AbstractPortHandler {
                 sb.append('.');
                 sb.append(reg.quantity);
                 sb.append('.');
-                sb.append(host.getMetadata().getSocketAddress().getAddress().getHostAddress());
+                sb.append(host.getMetadata().getTcpSocketAddress().getAddress().getHostAddress());
                 sb.append('.');
-                sb.append(host.getMetadata().getSocketAddress().getPort());
+                sb.append(host.getMetadata().getTcpSocketAddress().getPort());
                 sb.append('\n');
             }
         }

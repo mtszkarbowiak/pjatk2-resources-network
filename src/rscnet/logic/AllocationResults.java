@@ -73,7 +73,7 @@ public class AllocationResults {
             logger.append(allocated);
             logger.append(':');
 
-            InetSocketAddress address = host.getMetadata().getSocketAddress();
+            InetSocketAddress address = host.getMetadata().getTcpSocketAddress();
             logger.append(address.getAddress().getHostAddress());
             logger.append(':');
             logger.append(address.getPort());

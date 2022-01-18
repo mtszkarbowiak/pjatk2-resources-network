@@ -5,6 +5,7 @@ import rscnet.InternalCommunication;
 import rscnet.TerminationListener;
 import rscnet.data.AppConfig;
 import rscnet.logging.LogType;
+import rscnet.logic.HostMetadata;
 import rscnet.logic.HostStatus;
 import rscnet.logic.NetworkStatus;
 import rscnet.utils.ThreadBlocking;
@@ -57,19 +58,22 @@ public class ClientMasterPortHandler extends AbstractPortHandler
         if(collapseQueue.isEmpty() == false)
         {
             collapsingHost = collapseQueue.remove();
-
-            InetSocketAddress address = collapsingHost.getMetadata().getSocketAddress();
-
-            log("Collapsing: " + collapsingHost.getMetadata().getIdentifier() + " at " + address, LogType.Info);
+            HostMetadata hostMetadata = collapsingHost.getMetadata();
 
             if(unreliableConnectionFactory == null) {
                 Socket socket = new Socket();
-                socket.connect(address);
+                InetSocketAddress tcpSocketAddress = hostMetadata.getTcpSocketAddress();
+                log("Collapsing: " + collapsingHost.getMetadata().getIdentifier() + " at (TCP)" + tcpSocketAddress, LogType.Info);
+
+                socket.connect(tcpSocketAddress);
+
                 return new ReliableConnection(socket);
             }else{
-                InetSocketAddress unreliableMasterSocketAddress = new InetSocketAddress(
-                        address.getAddress(), address.getPort() + 100);
-                return unreliableConnectionFactory.openUnreliableConnection(unreliableMasterSocketAddress);
+                InetSocketAddress udpSocketAddress = hostMetadata.getUdpSocketAddress();
+                log("Collapsing: " + collapsingHost.getMetadata().getIdentifier() + " at (UDP)" + udpSocketAddress, LogType.Info);
+
+                return unreliableConnectionFactory.openUnreliableConnection(
+                        udpSocketAddress);
             }
         }
         else /*if(collapseQueue.isEmpty())*/

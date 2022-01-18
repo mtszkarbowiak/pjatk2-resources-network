@@ -10,6 +10,7 @@ import java.io.*;
 import java.net.*;
 import java.util.Map;
 
+import static rscnet.Constants.App.NULL_PORT;
 import static rscnet.Constants.NetCommands.*;
 
 @SuppressWarnings("PointlessBooleanExpression")
@@ -19,7 +20,8 @@ public class ClientSubHostPortHandler extends AbstractPortHandler
     private final InternalCommunication internalCommunication;
     private final InetSocketAddress friendSocketAddress;
     private final UnreliableConnectionFactory unreliableConnectionFactory;
-    private InetSocketAddress masterSocketAddress;
+    private InetSocketAddress masterTcpSocketAddress;
+    private InetSocketAddress masterUdpSocketAddress;
     private boolean isMasterTrue;
 
     public ClientSubHostPortHandler(
@@ -55,17 +57,12 @@ public class ClientSubHostPortHandler extends AbstractPortHandler
             internalCommunication.registrationConfirmation.getValue() &&
             unreliableConnectionFactory != null){
 
-            InetSocketAddress unreliableMasterSocketAddress = new InetSocketAddress(
-                    masterSocketAddress.getAddress(),
-                    masterSocketAddress.getPort() + 100);
-
-            return unreliableConnectionFactory.openUnreliableConnection(
-                    unreliableMasterSocketAddress);
+            return unreliableConnectionFactory.openUnreliableConnection(masterUdpSocketAddress);
         }
 
         Socket result = new Socket();
         InetSocketAddress address =
-                masterSocketAddress != null ? masterSocketAddress : friendSocketAddress;
+                masterTcpSocketAddress != null ? masterTcpSocketAddress : friendSocketAddress;
 
         result.connect(address);
 
@@ -101,11 +98,11 @@ public class ClientSubHostPortHandler extends AbstractPortHandler
 
     private void requestMasterAddress(Connection connection) throws IOException
     {
-        if(masterSocketAddress == null) {
+        if(masterTcpSocketAddress == null) {
             log("Establishing connection to the base friend.", LogType.Info);
             isMasterTrue = false;
         }else{
-            log("Establishing connection to the over-friend: " + masterSocketAddress, LogType.Info);
+            log("Establishing connection to the over-friend: " + masterTcpSocketAddress, LogType.Info);
         }
 
         log("Asking for the master...", LogType.Out);
@@ -118,21 +115,30 @@ public class ClientSubHostPortHandler extends AbstractPortHandler
             case HEAD_RESPONSE_ABOUT_MASTER: {
                 InetAddress masterAddress = InetAddress.getByName(args[1]);
                 int masterPort = Integer.parseInt(args[2]);
-                masterSocketAddress = new InetSocketAddress(masterAddress, masterPort);
+                masterTcpSocketAddress = new InetSocketAddress(masterAddress, masterPort);
 
                 isMasterTrue = false;
-                log("Next potential master acknowledged: " + masterSocketAddress, LogType.In);
+                log("Next potential master acknowledged: " + masterTcpSocketAddress, LogType.In);
             }  break;
 
             case HEAD_RESPONSE_I_AM_MASTER: {
-                masterSocketAddress = connection.getRemoteSocketAddress();
+                masterTcpSocketAddress = connection.getRemoteSocketAddress();
+
+                int masterUdpPort = Integer.parseInt(args[1]);
+                if(masterUdpPort != NULL_PORT) {
+                    masterUdpSocketAddress = new InetSocketAddress(masterTcpSocketAddress.getAddress(), masterUdpPort);
+                    log("Friend is the master with UDP channel: " + masterUdpPort, LogType.In);
+                }
+                else {
+                    masterUdpSocketAddress = null;
+                    log("Friend is the master without UDP channel.", LogType.In);
+                }
 
                 isMasterTrue = true;
-                log("Friend is the master! Master validated.", LogType.In);
             }  break;
 
             case HEAD_RESPONSE_FAIL: {
-                masterSocketAddress = null;
+                masterTcpSocketAddress = null;
                 isMasterTrue = false;
                 log("Friend does not know any master and has no friends. (Error)", LogType.In);
             }  break;
@@ -150,7 +156,9 @@ public class ClientSubHostPortHandler extends AbstractPortHandler
         msg.append(' ');
         msg.append(config.getIdentifier());
         msg.append(' ');
-        msg.append(config.getHostingPort());
+        msg.append(config.getHostingTcpPort());
+        msg.append(' ');
+        msg.append(config.getHostingUdpPort());
 
         for (Map.Entry<String,Integer> keyVal : config.getResourcesSpaces().entrySet()) {
             msg .append(" ")

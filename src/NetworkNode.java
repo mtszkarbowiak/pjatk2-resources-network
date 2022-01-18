@@ -42,7 +42,7 @@ public class NetworkNode
 
         System.out.println(config);
         System.out.println(masterHostMode ? "Running as MASTER" : "Running as SLAVE");
-        System.out.println(USE_UNRELIABLE_CONNECTION ? "UDP communication is turned ON." : "UDP communication is turned OFF.");
+        System.out.println(config.hasHostingUdpPort() ? "UDP communication is turned ON." : "UDP communication is turned OFF.");
         System.out.println("Max Lifetime: " + MAX_APP_LIFETIME + " ms");
         System.out.println();
 
@@ -54,8 +54,8 @@ public class NetworkNode
         NetworkStatus networkStatus = null;
         InternalCommunication internalCommunication = new InternalCommunication();
 
-        if(USE_UNRELIABLE_CONNECTION){
-            unreliableConnectionFactory = new UnreliableConnectionFactory(50, config.getHostingPort() + 100);
+        if(config.hasHostingUdpPort()){
+            unreliableConnectionFactory = new UnreliableConnectionFactory(50, config.getHostingUdpPort());
             terminationListeners.add(unreliableConnectionFactory);
 
             unreliableConnectionsThread = new Thread(unreliableConnectionFactory);

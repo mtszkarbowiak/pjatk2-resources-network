@@ -4,21 +4,28 @@ import java.net.*;
 import java.util.*;
 
 public class HostMetadata {
-    private final InetSocketAddress socketAddress;
+    private final InetSocketAddress tcpSocketAddress;
+    private final InetSocketAddress udpSocketAddress;
     private final int identifier;
     private final Map<String, Integer> space;
 
     public HostMetadata(
-            InetSocketAddress socketAddress,
+            InetSocketAddress tcpSocketAddress,
+            InetSocketAddress udpSocketAddress,
             int identifier,
             Map<String, Integer> space) {
-        this.socketAddress = socketAddress;
+        this.tcpSocketAddress = tcpSocketAddress;
+        this.udpSocketAddress = udpSocketAddress;
         this.identifier = identifier;
         this.space = space;
     }
 
-    public InetSocketAddress getSocketAddress() {
-        return socketAddress;
+    public InetSocketAddress getTcpSocketAddress() {
+        return tcpSocketAddress;
+    }
+
+    public InetSocketAddress getUdpSocketAddress() {
+        return udpSocketAddress;
     }
 
     public int getIdentifier() {

@@ -29,9 +29,10 @@ Węzły będą komunikować się ze sobą w postaci bardzo krótkich sesji poł�
 używanego protokołu warstwy transportu. Dokładniejsze informacje dotyczące wysyłanych danych oraz sposobie są 
 opisane w akapitach niżej.
 
-> Używany protokół TCP lub UDP może być zmieniony przez zmianę 
-> stałej `USE_UNRELIABLE_CONNECTION` znajdującej się
-> w klasie `rscnet.Constants.App`.
+> Używany protokół TCP lub UDP jest determinowany przez to, czy zosta odnaleziony port UDP węzła głównego.
+> **Komunikacja przy pomocy UDP wymaga, aby pod-węzeł sam posiadał otwarty port UDP. Oznacza to, że nie wolno podać
+> parametru `-udpport` tylko części węzłów. Taka sytuacja jest nieprzewidziana i będzie prowadzić do niestabilności
+> programu.**
 
 
 
@@ -112,7 +113,7 @@ Nowy pod-węzeł sieci zadaje pytanie kolejnym węzłom, które są kandydatami 
 
 1. `ASK_HIM <IP> <Port>` informująca o tym, że węzeł nie jest głównym. Posiada on jednak bramę, która może zostać
 odpytana o to samo.
-2. `IM_MASTER` informująca o tym, że węzeł uważa się za węzeł główny. Posiada on stan sieci, zmodyfikowany
+2. `IM_MASTER <UdpPort>` informująca o tym, że węzeł uważa się za węzeł główny. Posiada on stan sieci, zmodyfikowany
 serwis klienta, etc. Nie udziela on jednak żadnej innej informacji o stanie sieci, możliwości rejestracji, ani innych.
 3. `UNKNOWN_MASTER` (nieobsługiwane) informująca o tym, że węzeł nie jest węzłem głównym, ale też nie posiada bramy.
 Został on niepoprawnie skonfigurowany.
